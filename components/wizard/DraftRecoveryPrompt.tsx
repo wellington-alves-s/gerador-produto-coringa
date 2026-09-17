@@ -34,10 +34,18 @@ export function DraftRecoveryPrompt() {
       <div className="max-w-sm rounded-xl bg-white p-6 text-center shadow-xl dark:bg-gray-900">
         <p className="mb-4">Encontramos uma encomenda não finalizada. Deseja continuar?</p>
         <div className="flex justify-center gap-3">
-          <button type="button" onClick={comecarNova} className="rounded-md border px-4 py-2">
+          <button
+            type="button"
+            onClick={comecarNova}
+            className="rounded-md border px-4 py-2 dark:border-gray-700"
+          >
             Começar nova
           </button>
-          <button type="button" onClick={continuar} className="rounded-md bg-red-700 px-4 py-2 text-white">
+          <button
+            type="button"
+            onClick={continuar}
+            className="rounded-md bg-red-700 px-4 py-2 text-white dark:bg-red-600"
+          >
             Continuar
           </button>
         </div>

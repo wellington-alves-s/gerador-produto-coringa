@@ -35,7 +35,7 @@ export default function EtapaRevisao() {
         <DocumentoCroqui estado={estado} />
       </div>
 
-      <details className="mb-6 rounded-md border p-4">
+      <details className="mb-6 rounded-md border p-4 dark:border-gray-700">
         <summary className="cursor-pointer font-medium">
           Informações de compra (opcional — deixe em branco para a versão de aprovação do cliente)
         </summary>
@@ -43,7 +43,7 @@ export default function EtapaRevisao() {
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Fornecedor</span>
             <input
-              className="w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+              className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               value={estado.compra.fornecedor}
               onChange={(e) => atualizarCompra("fornecedor", e.target.value)}
             />
@@ -51,7 +51,7 @@ export default function EtapaRevisao() {
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Custo</span>
             <input
-              className="w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+              className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               value={estado.compra.custo}
               onChange={(e) => atualizarCompra("custo", e.target.value)}
             />
@@ -60,13 +60,17 @@ export default function EtapaRevisao() {
       </details>
 
       <div className="flex justify-between">
-        <button type="button" onClick={() => router.push("/criar/imagem")} className="rounded-md border px-5 py-2">
+        <button
+          type="button"
+          onClick={() => router.push("/criar/imagem")}
+          className="rounded-md border px-5 py-2 dark:border-gray-700"
+        >
           ← Voltar
         </button>
         <button
           type="button"
           onClick={() => router.push("/criar/resultado")}
-          className="rounded-md bg-red-700 px-5 py-2 text-white"
+          className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600"
         >
           Gerar Croqui
         </button>

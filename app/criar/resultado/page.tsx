@@ -44,7 +44,11 @@ export default function EtapaResultado() {
     return (
       <div>
         <p className="mb-4">Nenhuma encomenda em andamento.</p>
-        <button type="button" onClick={() => router.push("/criar/tipo")} className="rounded-md border px-5 py-2">
+        <button
+          type="button"
+          onClick={() => router.push("/criar/tipo")}
+          className="rounded-md border px-5 py-2 dark:border-gray-700"
+        >
           Começar
         </button>
       </div>
@@ -66,7 +70,7 @@ export default function EtapaResultado() {
           type="button"
           disabled={exportando}
           onClick={baixarPdf}
-          className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40"
+          className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40 dark:bg-red-600"
         >
           Baixar PDF
         </button>
@@ -74,11 +78,15 @@ export default function EtapaResultado() {
           type="button"
           disabled={exportando}
           onClick={baixarImagem}
-          className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40"
+          className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40 dark:bg-red-600"
         >
           Baixar Imagem
         </button>
-        <button type="button" onClick={() => router.push("/criar/revisao")} className="rounded-md border px-5 py-2">
+        <button
+          type="button"
+          onClick={() => router.push("/criar/revisao")}
+          className="rounded-md border px-5 py-2 dark:border-gray-700"
+        >
           ← Voltar para Revisão
         </button>
       </div>

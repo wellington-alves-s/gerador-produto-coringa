@@ -82,7 +82,7 @@ export default function EtapaImagem() {
           placeholder="Buscar por nome ou categoria..."
           value={termoBusca}
           onChange={(e) => setTermoBusca(e.target.value)}
-          className="mb-3 w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+          className="mb-3 w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
         />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {itensFiltrados.map((item) => (
@@ -103,13 +103,17 @@ export default function EtapaImagem() {
       </div>
 
       <div className="mt-8 flex justify-between">
-        <button type="button" onClick={() => router.push(rotaVoltar)} className="rounded-md border px-5 py-2">
+        <button
+          type="button"
+          onClick={() => router.push(rotaVoltar)}
+          className="rounded-md border px-5 py-2 dark:border-gray-700"
+        >
           ← Voltar
         </button>
         <button
           type="button"
           onClick={() => router.push("/criar/revisao")}
-          className="rounded-md bg-red-700 px-5 py-2 text-white"
+          className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600"
         >
           Próximo →
         </button>

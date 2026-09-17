@@ -46,14 +46,18 @@ export default function EtapaEspecificacoes() {
       </div>
 
       <div className="mt-8 flex justify-between">
-        <button type="button" onClick={() => router.push("/criar/pedido")} className="rounded-md border px-5 py-2">
+        <button
+          type="button"
+          onClick={() => router.push("/criar/pedido")}
+          className="rounded-md border px-5 py-2 dark:border-gray-700"
+        >
           ← Voltar
         </button>
         <button
           type="button"
           disabled={!podeAvancar}
           onClick={() => router.push("/criar/imagem")}
-          className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40"
+          className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40 dark:bg-red-600"
         >
           Próximo →
         </button>

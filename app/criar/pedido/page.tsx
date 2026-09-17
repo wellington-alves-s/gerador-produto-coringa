@@ -28,7 +28,7 @@ export default function EtapaPedido() {
         <label className="block">
           <span className="mb-1 block text-sm font-medium">Cliente</span>
           <input
-            className="w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+            className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             value={estado.pedido.cliente}
             onChange={(e) => atualizar("cliente", e.target.value)}
           />
@@ -38,7 +38,7 @@ export default function EtapaPedido() {
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Nº do Pedido</span>
             <input
-              className="w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+              className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               value={estado.pedido.numeroPedido}
               onChange={(e) => atualizar("numeroPedido", e.target.value)}
             />
@@ -47,7 +47,7 @@ export default function EtapaPedido() {
             <span className="mb-1 block text-sm font-medium">Data</span>
             <input
               type="date"
-              className="w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+              className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               value={estado.pedido.data}
               onChange={(e) => atualizar("data", e.target.value)}
             />
@@ -58,7 +58,7 @@ export default function EtapaPedido() {
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Vendedor</span>
             <input
-              className="w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+              className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               value={estado.pedido.vendedor}
               onChange={(e) => atualizar("vendedor", e.target.value)}
             />
@@ -66,7 +66,7 @@ export default function EtapaPedido() {
           <label className="block">
             <span className="mb-1 block text-sm font-medium">Loja</span>
             <input
-              className="w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+              className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
               value={estado.pedido.loja}
               onChange={(e) => atualizar("loja", e.target.value)}
             />
@@ -79,7 +79,7 @@ export default function EtapaPedido() {
           </span>
           <textarea
             rows={4}
-            className="w-full rounded-md border px-3 py-2 dark:bg-gray-900"
+            className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
             value={estado.pedido.descricao}
             onChange={(e) => atualizar("descricao", e.target.value)}
           />
@@ -87,14 +87,18 @@ export default function EtapaPedido() {
       </div>
 
       <div className="mt-8 flex justify-between">
-        <button type="button" onClick={() => router.push("/criar/tipo")} className="rounded-md border px-5 py-2">
+        <button
+          type="button"
+          onClick={() => router.push("/criar/tipo")}
+          className="rounded-md border px-5 py-2 dark:border-gray-700"
+        >
           ← Voltar
         </button>
         <button
           type="button"
           disabled={!podeAvancar}
           onClick={() => router.push("/criar/especificacoes")}
-          className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40"
+          className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40 dark:bg-red-600"
         >
           Próximo →
         </button>
