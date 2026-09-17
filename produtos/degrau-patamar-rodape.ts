@@ -1,0 +1,14 @@
+import type { ConfigProduto } from "./tipos";
+
+export const degrauPatamarRodape: ConfigProduto = {
+  id: "degrau-patamar-rodape",
+  nome: "Degrau / Patamar / Rodapé",
+  tituloDocumento: "ENCOMENDA ESPECIAL DEGRAU/PATAMAR/RODAPÉ",
+  prazoEntregaDias: 60,
+  campos: [
+    { id: "largura", tipo: "medida", unidade: "m", label: "Largura", obrigatorio: true },
+    { id: "comprimento", tipo: "medida", unidade: "m", label: "Comprimento", obrigatorio: true },
+    { id: "espessura", tipo: "medida", unidade: "m", label: "Espessura", obrigatorio: true },
+    { id: "tipoMadeira", tipo: "texto", label: "Tipo de madeira", obrigatorio: true },
+  ],
+};
