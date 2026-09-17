@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useReducer, type Dispatch, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useReducer, useRef, type Dispatch, type ReactNode } from "react";
 import { ESTADO_INICIAL, type EstadoPedido, type EtapaId } from "./pedido";
 import { salvarRascunho } from "./wizard-storage";
 import type { TipoProdutoId } from "@/produtos/tipos";
@@ -53,8 +53,13 @@ const WizardContext = createContext<WizardContextValor | null>(null);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [estado, dispatch] = useReducer(reducerPedido, ESTADO_INICIAL);
+  const primeiraRenderizacao = useRef(true);
 
   useEffect(() => {
+    if (primeiraRenderizacao.current) {
+      primeiraRenderizacao.current = false;
+      return;
+    }
     const id = setTimeout(() => salvarRascunho(estado), 300);
     return () => clearTimeout(id);
   }, [estado]);

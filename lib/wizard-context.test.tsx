@@ -1,6 +1,9 @@
-import { describe, it, expect } from "vitest";
-import { reducerPedido } from "./wizard-context";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render } from "@testing-library/react";
+import { useEffect } from "react";
+import { reducerPedido, WizardProvider, useWizard } from "./wizard-context";
 import { ESTADO_INICIAL } from "./pedido";
+import { salvarRascunho, carregarRascunho } from "./wizard-storage";
 
 describe("reducerPedido", () => {
   it("DEFINIR_TIPO troca o tipo e limpa especificações antigas", () => {
@@ -44,5 +47,32 @@ describe("reducerPedido", () => {
   it("REINICIAR volta ao estado inicial", () => {
     const alterado = reducerPedido(ESTADO_INICIAL, { type: "ATUALIZAR_PEDIDO", campo: "cliente", valor: "X" });
     expect(reducerPedido(alterado, { type: "REINICIAR" })).toEqual(ESTADO_INICIAL);
+  });
+});
+
+describe("WizardProvider — autosave", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
+  it("não salva o estado inicial só por causa da montagem, antes de qualquer ação real", async () => {
+    vi.useFakeTimers();
+    salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria", ultimaEtapa: "especificacoes" });
+
+    render(
+      <WizardProvider>
+        <div />
+      </WizardProvider>
+    );
+
+    // Passa tempo suficiente para o autosave de 300ms disparar, se ele fosse
+    // (incorretamente) agendado já na montagem.
+    await vi.advanceTimersByTimeAsync(400);
+
+    // O rascunho real ainda deve estar intacto — a montagem sozinha não pode
+    // ter sobrescrito com o ESTADO_INICIAL.
+    expect(carregarRascunho()?.ultimaEtapa).toBe("especificacoes");
+
+    vi.useRealTimers();
   });
 });
