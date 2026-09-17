@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Criar Produto Personalizado</title>
+		<link rel="stylesheet" href="css/croqui.css" />
+	</head>
+	<body>
+		<div class="card">
+			<h2>Criar Produto Personalizado (Produto Coringa)</h2>
+
+			<form action="croqui.php" method="POST" enctype="multipart/form-data" target="_blank">
+				<label for="tipo">Tipo de Produto:</label>
+				<select name="tipo" id="tipo" required>
+					<option value="">Selecione</option>
+					<option value="PORTA">PORTA</option>
+					<option value="ESQUADRIA">ESQUADRIA</option>
+					<option value="BATENTE">BATENTE</option>
+					<option value="GUARNIÇÃO">GUARNIÇÃO</option>
+					<option value="DEGRAU">DEGRAU</option>
+					<option value="PATAMAR">PATAMAR</option>
+					<option value="RODAPÉ">RODAPÉ</option>
+					<option value="FECHADURA">FECHADURA</option>
+					<option value="PUXADOR">PUXADOR</option>
+					<option value="KIT DE CORRER">KIT DE CORRER</option>
+					<option value="Outro">Outro</option>
+				</select>
+
+				<div class="campo descricao">
+					<label for="descricao">Descrição:</label>
+					<textarea name="descricao" id="descricao" rows="4" required></textarea>
+				</div>
+
+				<div class="campo altura">
+					<label for="altura">Altura (m):</label>
+					<input type="text" name="altura" id="altura" value="0,000" />
+				</div>
+
+				<div class="campo largura">
+					<label for="largura">Largura (m):</label>
+					<input type="text" name="largura" id="largura" value="0,000" />
+				</div>
+
+				<div class="campo profundidade">
+					<label for="profundidade">Profundidade (m):</label>
+					<input type="text" name="profundidade" id="profundidade" value="0,000" />
+				</div>
+
+				<!-- Campos específicos para Kit de Correr -->
+				<div class="campos-kit-correr" style="display: none">
+					<div class="campo">
+						<label for="tipo_kit">Tipo Kit:</label>
+						<select name="tipo_kit" id="tipo_kit">
+							<option value="">Selecione</option>
+							<option value="MADEIRA">MADEIRA</option>
+							<option value="ALUMINIO">ALUMINIO</option>
+							<option value="INOX">INOX</option>
+						</select>
+					</div>
+
+					<div class="campo">
+						<label for="modelo_kit">Modelo:</label>
+						<select name="modelo_kit" id="modelo_kit">
+							<option value="">Selecione</option>
+							<option value="EMBUTIR">EMBUTIR</option>
+							<option value="ROLDANA APARENTE">ROLDANA APARENTE</option>
+							<option value="BATENTE APARENTE">BATENTE APARENTE</option>
+							<option value="SEM BATENTE">SEM BATENTE</option>
+						</select>
+					</div>
+				</div>
+
+				<div class="campo espessura_porta">
+					<label for="espessura_porta">Espessura da Porta (m):</label>
+					<input type="text" name="espessura_porta" id="espessura_porta" value="0,000" />
+				</div>
+
+				<div class="campo espessura_batente">
+					<label for="espessura_batente">Caixa do Batente (m):</label>
+					<input
+						type="text"
+						name="espessura_batente"
+						id="espessura_batente"
+						value="0,000"
+					/>
+				</div>
+
+				<!-- Campos específicos para Esquadrias -->
+				<div class="campos-esquadria" style="display: none">
+					<div class="campo">
+						<label for="padrao_madeira_esquadria">Padrão Madeira:</label>
+						<input
+							type="text"
+							name="padrao_madeira_esquadria"
+							id="padrao_madeira_esquadria"
+						/>
+					</div>
+
+					<div class="campo">
+						<label for="medidas_guarnicao_esquadria">Medidas Guarnição (m):</label>
+						<input
+							type="text"
+							name="medidas_guarnicao_esquadria"
+							id="medidas_guarnicao_esquadria"
+							value="0,000"
+						/>
+					</div>
+
+					<div class="campo lados_esquadria">
+						<label>Lados:</label>
+						<select name="lados_esquadria" id="lados_esquadria">
+							<option value="">Selecione</option>
+							<option value="Um lado">UM LADO</option>
+							<option value="Dois lados">DOIS LADOS</option>
+						</select>
+					</div>
+
+					<div class="campo">
+						<label for="tipo_abertura_esquadria">Tipo de Abertura:</label>
+						<select name="tipo_abertura_esquadria" id="tipo_abertura_esquadria">
+							<option value="">Selecione</option>
+							<option value="ABRIR / ABRIR">ABRIR / ABRIR</option>
+							<option value="CORRER">CORRER</option>
+							<option value="ABRIR E REMONTAR">ABRIR E REMONTAR</option>
+							<option value="GUILHOTINA">GUILHOTINA</option>
+							<option value="PANTOGRAFICO">PANTOGRÁFICO</option>
+							<option value="CORRER / ABRIR">CORRER / ABRIR</option>
+						</select>
+					</div>
+
+					<div class="campo">
+						<label for="lado_abertura_esquadria">Lado de Abertura:</label>
+						<input
+							type="text"
+							name="lado_abertura_esquadria"
+							id="lado_abertura_esquadria"
+						/>
+					</div>
+
+					<div class="campo">
+						<label for="tipo_palheta">Tipo de Palheta:</label>
+						<select name="tipo_palheta" id="tipo_palheta">
+							<option value="">Selecione</option>
+							<option value="PALHETA FRANCESA">PALHETA FRANCESA</option>
+							<option value="PALHETA SEMI-PORTUGUESA">PALHETA SEMI-PORTUGUESA</option>
+							<option value="PALHETA PORTUGUESA">PALHETA PORTUGUESA</option>
+							<option value="SEMI-PANORAMICO">SEMI-PANORÂMICO</option>
+							<option value="PANORAMICO">PANORÂMICO</option>
+							<option value="QUADRICULADO">QUADRICULADO</option>
+						</select>
+					</div>
+
+					<div class="campo">
+						<label for="acabamento_ferragem">Acabamento Ferragem:</label>
+						<input type="text" name="acabamento_ferragem" id="acabamento_ferragem" />
+					</div>
+
+					<div class="campo vidros">
+						<label>Vidros:</label>
+						<div class="checkbox-group">
+							<label class="checkbox-label">
+								<input type="checkbox" name="vidros[]" value="CONSIDERAR_DESENHO" />
+								<span>CONSIDERAR QUANTIDADE DE VIDROS DO DESENHO</span>
+							</label>
+							<label class="checkbox-label">
+								<input type="checkbox" name="vidros[]" value="PROPORCIONAL" />
+								<span
+									>FAZER QUANTIDADE E TAMANHOS PROPORCIONAIS AS MEDIDAS DA
+									PEÇA</span
+								>
+							</label>
+							<label class="checkbox-label">
+								<input type="checkbox" name="vidros[]" value="CRITERIO_FABRICA" />
+								<span>QUANTIDADES E TAMANHOS A CRITÉRIO DA FABRICA</span>
+							</label>
+						</div>
+					</div>
+				</div>
+
+				<!-- Campos específicos para Portas -->
+				<div class="campos-porta" style="display: none">
+					<div class="campo tipo-porta">
+						<label>Tipo:</label>
+						<div class="checkbox-group">
+							<label class="checkbox-label">
+								<input type="checkbox" name="tipo_porta[]" value="SÓ FOLHA" />
+								<span>SÓ FOLHA</span>
+							</label>
+							<label class="checkbox-label">
+								<input type="checkbox" name="tipo_porta[]" value="CONJUNTO" />
+								<span>CONJUNTO</span>
+							</label>
+							<label class="checkbox-label">
+								<input type="checkbox" name="tipo_porta[]" value="FRISADA" />
+								<span>FRISADA</span>
+							</label>
+							<label class="checkbox-label">
+								<input type="checkbox" name="tipo_porta[]" value="RASGADA" />
+								<span>RASGADA</span>
+							</label>
+						</div>
+					</div>
+
+					<div class="campo">
+						<label for="modelo_friso">Modelo de Friso:</label>
+						<input type="text" name="modelo_friso" id="modelo_friso" />
+					</div>
+
+					<div class="campo">
+						<label for="padrao_madeira">Padrão Madeira:</label>
+						<input type="text" name="padrao_madeira" id="padrao_madeira" />
+					</div>
+
+					<div class="campo">
+						<label for="tipo_porta_select">Tipo de Porta:</label>
+						<select name="tipo_porta_select" id="tipo_porta_select">
+							<option value="">Selecione</option>
+							<option value="Solida">Sólida</option>
+							<option value="Sarrafeada">Sarrafeada</option>
+							<option value="Macica">Maciça</option>
+						</select>
+					</div>
+
+					<div class="campo">
+						<label for="medidas_guarnicao">Medidas Guarnição:</label>
+						<input type="text" name="medidas_guarnicao" id="medidas_guarnicao" />
+					</div>
+
+					<div class="campo lados">
+						<label>Lados:</label>
+						<select name="lados" id="lados">
+							<option value="">Selecione</option>
+							<option value="Um lado">Um lado</option>
+							<option value="Dois lados">Dois lados</option>
+						</select>
+					</div>
+
+					<div class="campo">
+						<label for="tipo_abertura">Tipo de Abertura:</label>
+						<select name="tipo_abertura" id="tipo_abertura">
+							<option value="">Selecione</option>
+							<option value="ABRIR / ABRIR">ABRIR / ABRIR</option>
+							<option value="CORRER">CORRER</option>
+							<option value="ABRIR E REMONTAR">ABRIR E REMONTAR</option>
+							<option value="GUILHOTINA">GUILHOTINA</option>
+							<option value="PANTOGRAFICO">PANTOGRÁFICO</option>
+							<option value="CORRER / ABRIR">CORRER / ABRIR</option>
+						</select>
+					</div>
+
+					<div class="campo">
+						<label for="lado_abertura">Lado de Abertura:</label>
+						<input type="text" name="lado_abertura" id="lado_abertura" />
+					</div>
+				</div>
+
+				<div class="campo unidade">
+					<label for="unidade">Unidade:</label>
+					<select name="unidade" id="unidade" required>
+						<option value="">Selecione</option>
+						<option value="UN">UN - Unidade</option>
+						<option value="PC">PC - Peça</option>
+						<option value="M²">M² - Metro Quadrado</option>
+						<option value="M³">M³ - Metro Cúbico</option>
+						<option value="BD">BD - Balde</option>
+						<option value="CJ">CJ - Conjunto</option>
+						<option value="CM">CM - Centímetro</option>
+						<option value="CX">CX - Caixa</option>
+						<option value="FD">FD - Fardo</option>
+						<option value="FL">FL - Folha</option>
+						<option value="JG">JG - Jogo</option>
+						<option value="ML">ML - Mililitro</option>
+						<option value="MT">MT - Metro</option>
+						<option value="PA">PA - Par</option>
+						<option value="PT">PT - Pacote</option>
+						<option value="SC">SC - Saco</option>
+						<option value="SE">SE - Serviço</option>
+					</select>
+				</div>
+
+				<div class="campo preco">
+					<label for="preco">Preço de Venda (R$):</label>
+					<input type="text" name="preco" id="preco" value="0,00" required />
+				</div>
+
+				<div class="campo quantidade">
+					<label for="quantidade">Quantidade:</label>
+					<input type="number" name="quantidade" id="quantidade" step="1" required />
+				</div>
+
+				<div class="campo montagem">
+					<label for="montagem">Montagem:</label>
+					<select name="montagem" id="montagem">
+						<option value="">Selecione</option>
+						<option value="Portas">Portas</option>
+						<option value="Batente">Batente</option>
+						<option value="Fechadura">Fechadura</option>
+					</select>
+				</div>
+
+				<div class="campo grupo_servico">
+					<label for="grupo_servico">Grupo de Serviço:</label>
+					<select name="grupo_servico" id="grupo_servico">
+						<option value="">Selecione</option>
+						<option value="Deck">Deck</option>
+						<option value="Degrau">Degrau</option>
+						<option value="Piso Vinilico">Piso Vinílico</option>
+						<option value="Assoalho">Assoalho</option>
+						<option value="Taco">Taco</option>
+					</select>
+				</div>
+
+				<div class="campo">
+					<label for="info_adicionais">Informações Adicionais:</label>
+					<textarea
+						name="info_adicionais"
+						id="info_adicionais"
+						rows="4"
+						placeholder="Digite aqui informações adicionais sobre o produto..."
+					></textarea>
+				</div>
+
+				<div class="campo imagem">
+					<label>Imagem do Produto:</label>
+					<div class="imagem-container">
+						<input
+							type="file"
+							name="imagem"
+							id="imagem"
+							accept="image/*"
+							style="display: none"
+						/>
+						<input type="hidden" name="imagem-selecionada" id="imagem-selecionada" />
+						<div class="botoes-imagem">
+							<button
+								type="button"
+								onclick="document.getElementById('imagem').click()"
+								class="btn-upload"
+							>
+								📁 Upload de Imagem
+							</button>
+							<button
+								type="button"
+								onclick="abrirBiblioteca()"
+								class="btn-biblioteca"
+							>
+								🖼️ Biblioteca de Imagens
+							</button>
+						</div>
+						<div id="preview-container" style="display: none; margin-top: 10px">
+							<img
+								id="preview-imagem"
+								src=""
+								alt="Preview"
+								style="max-width: 200px; max-height: 200px"
+							/>
+							<button type="button" onclick="removerImagem()" class="btn-remover">
+								❌ Remover
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<style>
+					.imagem-container {
+						margin-top: 5px;
+					}
+					.botoes-imagem {
+						display: flex;
+						gap: 10px;
+						margin-bottom: 10px;
+					}
+					.btn-upload,
+					.btn-biblioteca,
+					.btn-remover {
+						padding: 8px 15px;
+						border: none;
+						border-radius: 4px;
+						cursor: pointer;
+						font-size: 14px;
+						transition: background-color 0.3s;
+					}
+					.btn-upload {
+						background-color: #4caf50;
+						color: white;
+					}
+					.btn-biblioteca {
+						background-color: #2196f3;
+						color: white;
+					}
+					.btn-remover {
+						background-color: #f44336;
+						color: white;
+						margin-top: 5px;
+					}
+					.btn-upload:hover,
+					.btn-biblioteca:hover {
+						opacity: 0.9;
+					}
+					#preview-container {
+						text-align: center;
+					}
+					#preview-imagem {
+						border: 1px solid #ddd;
+						border-radius: 4px;
+						padding: 3px;
+					}
+				</style>
+
+				<script>
+					// Função para abrir a biblioteca de imagens
+					function abrirBiblioteca() {
+						window.open(
+							"biblioteca_imagens.php",
+							"Biblioteca de Imagens",
+							"width=800,height=600,toolbar=no,location=no,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes"
+						);
+					}
+
+					// Função para remover a imagem
+					function removerImagem() {
+						document.getElementById("imagem").value = "";
+						document.getElementById("imagem-selecionada").value = "";
+						document.getElementById("preview-container").style.display = "none";
+						document.getElementById("preview-imagem").src = "";
+					}
+
+					// Preview da imagem quando fizer upload
+					document.getElementById("imagem").addEventListener("change", function (e) {
+						const file = e.target.files[0];
+						if (file) {
+							const reader = new FileReader();
+							reader.onload = function (e) {
+								document.getElementById("preview-imagem").src = e.target.result;
+								document.getElementById("preview-container").style.display =
+									"block";
+								document.getElementById("imagem-selecionada").value = "";
+							};
+							reader.readAsDataURL(file);
+						}
+					});
+				</script>
+
+				<button type="submit">Gerar Croqui</button>
+				<button type="button" onclick="history.back()">Voltar</button>
+			</form>
+		</div>
+
+		<script src="js/form.js"></script>
+	</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Impressão do Croqui</title>
+		<style>
+			@page {
+				size: A4 landscape;
+				margin: 10mm;
+			}
+			body {
+				margin: 0;
+				padding: 0;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				min-height: 100vh;
+				background: white;
+				-webkit-print-color-adjust: exact !important;
+				print-color-adjust: exact !important;
+				color-adjust: exact !important;
+			}
+			img {
+				width: 100%;
+				height: auto;
+				page-break-inside: avoid;
+				border: 1px solid #000;
+				box-shadow: none;
+			}
+			@media print {
+				* {
+					-webkit-print-color-adjust: exact !important;
+					print-color-adjust: exact !important;
+					color-adjust: exact !important;
+				}
+				body {
+					margin: 0;
+					padding: 0;
+					background: white !important;
+				}
+				img {
+					max-width: 100%;
+					height: auto;
+					border: 1px solid #000 !important;
+					box-shadow: none !important;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<img id="printImage" src="" alt="Croqui para impressão" />
+		<script>
+			window.onload = function () {
+				// Receber a imagem da URL
+				const urlParams = new URLSearchParams(window.location.search);
+				const imageData = urlParams.get("img");
+				if (imageData) {
+					document.getElementById("printImage").src = decodeURIComponent(imageData);
+					// Imprimir automaticamente
+					setTimeout(function () {
+						window.print();
+						setTimeout(function () {
+							window.close();
+						}, 500);
+					}, 250);
+				}
+			};
+		</script>
+	</body>
+</html>
