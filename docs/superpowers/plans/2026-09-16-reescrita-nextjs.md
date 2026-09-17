@@ -525,7 +525,10 @@ describe("formatação de medida (padrão brasileiro)", () => {
   });
 
   it("digitar 9 uma vez produz 0,009", () => {
-    const buffer = atualizarBufferMedida(BUFFER_MEDIDA_INICIAL, "9");
+    // valorBrutoDoInput simula o valor completo do campo após a edição (o que o
+    // navegador realmente entrega em onChange), não só o dígito novo isolado.
+    const valorNoInput = formatarBufferMedida(BUFFER_MEDIDA_INICIAL) + "9";
+    const buffer = atualizarBufferMedida(BUFFER_MEDIDA_INICIAL, valorNoInput);
     expect(formatarBufferMedida(buffer)).toBe("0,009");
   });
 
@@ -538,7 +541,9 @@ describe("formatação de medida (padrão brasileiro)", () => {
   });
 
   it("apagar o último dígito visível volta uma casa", () => {
-    let buffer = atualizarBufferMedida(BUFFER_MEDIDA_INICIAL, "2100");
+    // O buffer é só uma string de 4 dígitos — "2100" já representa 2,100 m
+    // diretamente, sem precisar simular as 4 teclas que levariam até ele.
+    let buffer = "2100";
     expect(formatarBufferMedida(buffer)).toBe("2,100");
     const valorAposApagar = formatarBufferMedida(buffer).slice(0, -1);
     buffer = atualizarBufferMedida(buffer, valorAposApagar);
@@ -551,8 +556,7 @@ describe("formatação de medida (padrão brasileiro)", () => {
   });
 
   it("converte buffer para metros", () => {
-    const buffer = atualizarBufferMedida(BUFFER_MEDIDA_INICIAL, "2100");
-    expect(bufferMedidaParaMetros(buffer)).toBe(2.1);
+    expect(bufferMedidaParaMetros("2100")).toBe(2.1);
   });
 });
 ```
