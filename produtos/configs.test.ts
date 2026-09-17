@@ -29,7 +29,11 @@ describe("configs de produto — conteúdo específico", () => {
 
   it("esquadria: vidros tem as 3 opções do formulário físico", () => {
     const campo = PRODUTOS.esquadria.campos.find((c) => c.id === "vidros");
-    expect(campo && "opcoes" in campo ? campo.opcoes : []).toHaveLength(3);
+    expect(campo && "opcoes" in campo ? campo.opcoes : []).toEqual([
+      "CONSIDERAR QUANTIDADE DE VIDROS DO DESENHO",
+      "FAZER QUANTIDADE E TAMANHOS PROPORCIONAIS ÀS MEDIDAS DA PEÇA",
+      "QUANTIDADES E TAMANHOS A CRITÉRIO DA FÁBRICA",
+    ]);
   });
 
   it("degrau-patamar-rodape: só tem os 4 campos combinados, todos obrigatórios", () => {

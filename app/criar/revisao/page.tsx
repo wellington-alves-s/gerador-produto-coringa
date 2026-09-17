@@ -14,9 +14,17 @@ export default function EtapaRevisao() {
     dispatch({ type: "IR_PARA_ETAPA", etapa: "revisao" });
   }, [dispatch]);
 
+  useEffect(() => {
+    if (!estado.tipo) {
+      router.replace("/criar/tipo");
+    }
+  }, [estado.tipo, router]);
+
   function atualizarCompra(campo: keyof typeof estado.compra, valor: string) {
     dispatch({ type: "ATUALIZAR_COMPRA", campo, valor });
   }
+
+  if (!estado.tipo) return null;
 
   return (
     <div>

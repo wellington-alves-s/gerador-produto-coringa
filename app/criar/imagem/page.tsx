@@ -19,9 +19,17 @@ export default function EtapaImagem() {
     dispatch({ type: "IR_PARA_ETAPA", etapa: "imagem" });
   }, [dispatch]);
 
+  useEffect(() => {
+    if (!estado.tipo) {
+      router.replace("/criar/tipo");
+    }
+  }, [estado.tipo, router]);
+
   const itensFiltrados = useMemo(() => buscarImagens(BIBLIOTECA, termoBusca), [termoBusca]);
   const config = estado.tipo ? PRODUTOS[estado.tipo] : null;
   const rotaVoltar = config && config.campos.length > 0 ? "/criar/especificacoes" : "/criar/pedido";
+
+  if (!estado.tipo) return null;
 
   async function aoEscolherArquivo(arquivo: File | undefined) {
     if (!arquivo) return;

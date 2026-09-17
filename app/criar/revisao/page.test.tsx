@@ -6,7 +6,8 @@ import { WizardProvider, useWizard } from "@/lib/wizard-context";
 import EtapaRevisao from "./page";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 
 function ComTipo({ children }: { children: ReactNode }) {
   const { dispatch } = useWizard();
@@ -19,6 +20,7 @@ function ComTipo({ children }: { children: ReactNode }) {
 beforeEach(() => {
   window.localStorage.clear();
   push.mockClear();
+  replace.mockClear();
 });
 
 describe("Etapa Revisão", () => {
@@ -52,5 +54,14 @@ describe("Etapa Revisão", () => {
     );
     await user.click(screen.getByRole("button", { name: "Gerar Croqui" }));
     expect(push).toHaveBeenCalledWith("/criar/resultado");
+  });
+
+  it("redireciona para /criar/tipo quando não há tipo definido", () => {
+    render(
+      <WizardProvider>
+        <EtapaRevisao />
+      </WizardProvider>
+    );
+    expect(replace).toHaveBeenCalledWith("/criar/tipo");
   });
 });

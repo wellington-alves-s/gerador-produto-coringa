@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useReducer, useRef, type Dispatch, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useReducer, useRef, type Dispatch, type ReactNode } from "react";
 import { ESTADO_INICIAL, type EstadoPedido, type EtapaId } from "./pedido";
-import { salvarRascunho } from "./wizard-storage";
+import { existeRascunho, salvarRascunho } from "./wizard-storage";
 import type { TipoProdutoId } from "@/produtos/tipos";
 
 export type AcaoPedido =
@@ -52,17 +52,21 @@ type WizardContextValor = {
 const WizardContext = createContext<WizardContextValor | null>(null);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
-  const [estado, dispatch] = useReducer(reducerPedido, ESTADO_INICIAL);
-  const primeiraRenderizacao = useRef(true);
+  const [estado, dispatchBase] = useReducer(reducerPedido, ESTADO_INICIAL);
+  const podeSalvar = useRef(!existeRascunho());
 
   useEffect(() => {
-    if (primeiraRenderizacao.current) {
-      primeiraRenderizacao.current = false;
-      return;
-    }
+    if (!podeSalvar.current) return;
     const id = setTimeout(() => salvarRascunho(estado), 300);
     return () => clearTimeout(id);
   }, [estado]);
+
+  const dispatch = useCallback<Dispatch<AcaoPedido>>((acao) => {
+    if (acao.type === "CARREGAR_ESTADO" || acao.type === "REINICIAR") {
+      podeSalvar.current = true;
+    }
+    dispatchBase(acao);
+  }, []);
 
   return <WizardContext.Provider value={{ estado, dispatch }}>{children}</WizardContext.Provider>;
 }

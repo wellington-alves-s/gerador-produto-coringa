@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWizard } from "@/lib/wizard-context";
 import { carregarRascunho, limparRascunho, existeRascunho } from "@/lib/wizard-storage";
@@ -8,11 +8,9 @@ import { carregarRascunho, limparRascunho, existeRascunho } from "@/lib/wizard-s
 export function DraftRecoveryPrompt() {
   const { dispatch } = useWizard();
   const router = useRouter();
-  const [mostrar, setMostrar] = useState(false);
-
-  useEffect(() => {
-    setMostrar(existeRascunho());
-  }, []);
+  const [mostrar, setMostrar] = useState(() =>
+    typeof window === "undefined" ? false : existeRascunho()
+  );
 
   function continuar() {
     const rascunho = carregarRascunho();

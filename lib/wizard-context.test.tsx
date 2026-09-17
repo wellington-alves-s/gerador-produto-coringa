@@ -55,23 +55,57 @@ describe("WizardProvider — autosave", () => {
     window.localStorage.clear();
   });
 
-  it("não salva o estado inicial só por causa da montagem, antes de qualquer ação real", async () => {
+  function PaginaQueDisparaNoMount() {
+    const { dispatch } = useWizard();
+    useEffect(() => {
+      dispatch({ type: "IR_PARA_ETAPA", etapa: "tipo" });
+    }, [dispatch]);
+    return null;
+  }
+
+  it("não perde um rascunho real mesmo quando a própria página dispara uma ação no mount, antes da recuperação ser resolvida", async () => {
     vi.useFakeTimers();
     salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria", ultimaEtapa: "especificacoes" });
 
     render(
       <WizardProvider>
-        <div />
+        <PaginaQueDisparaNoMount />
       </WizardProvider>
     );
 
-    // Passa tempo suficiente para o autosave de 300ms disparar, se ele fosse
-    // (incorretamente) agendado já na montagem.
+    // Uma página real dispara IR_PARA_ETAPA no próprio mount, gerando uma
+    // segunda renderização antes que o usuário decida "Continuar" ou
+    // "Começar nova" no diálogo de recuperação. O autosave não pode
+    // sobrescrever o rascunho real nesse meio-tempo.
     await vi.advanceTimersByTimeAsync(400);
 
-    // O rascunho real ainda deve estar intacto — a montagem sozinha não pode
-    // ter sobrescrito com o ESTADO_INICIAL.
     expect(carregarRascunho()?.ultimaEtapa).toBe("especificacoes");
+
+    vi.useRealTimers();
+  });
+
+  it("volta a salvar normalmente depois que o usuário resolve a recuperação (Continuar)", async () => {
+    vi.useFakeTimers();
+    salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria", ultimaEtapa: "especificacoes" });
+
+    function ComRecuperacao() {
+      const { dispatch } = useWizard();
+      useEffect(() => {
+        dispatch({ type: "IR_PARA_ETAPA", etapa: "tipo" });
+        dispatch({ type: "CARREGAR_ESTADO", estado: { ...ESTADO_INICIAL, tipo: "outros" } });
+      }, [dispatch]);
+      return null;
+    }
+
+    render(
+      <WizardProvider>
+        <ComRecuperacao />
+      </WizardProvider>
+    );
+
+    await vi.advanceTimersByTimeAsync(400);
+
+    expect(carregarRascunho()?.tipo).toBe("outros");
 
     vi.useRealTimers();
   });

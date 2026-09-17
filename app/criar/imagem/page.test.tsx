@@ -1,11 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { WizardProvider } from "@/lib/wizard-context";
+import { useEffect, type ReactNode } from "react";
+import { WizardProvider, useWizard } from "@/lib/wizard-context";
 import EtapaImagem from "./page";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push }) }));
+const replace = vi.fn();
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace }) }));
 
 vi.mock("@/lib/biblioteca-dados", () => ({
   BIBLIOTECA: [
@@ -14,9 +16,18 @@ vi.mock("@/lib/biblioteca-dados", () => ({
   ],
 }));
 
+function ComTipo({ children }: { children: ReactNode }) {
+  const { dispatch } = useWizard();
+  useEffect(() => {
+    dispatch({ type: "DEFINIR_TIPO", tipo: "outros" });
+  }, [dispatch]);
+  return <>{children}</>;
+}
+
 beforeEach(() => {
   window.localStorage.clear();
   push.mockClear();
+  replace.mockClear();
 });
 
 describe("Etapa Imagem", () => {
@@ -24,7 +35,9 @@ describe("Etapa Imagem", () => {
     const user = userEvent.setup();
     render(
       <WizardProvider>
-        <EtapaImagem />
+        <ComTipo>
+          <EtapaImagem />
+        </ComTipo>
       </WizardProvider>
     );
 
@@ -41,7 +54,9 @@ describe("Etapa Imagem", () => {
     const user = userEvent.setup();
     render(
       <WizardProvider>
-        <EtapaImagem />
+        <ComTipo>
+          <EtapaImagem />
+        </ComTipo>
       </WizardProvider>
     );
 
@@ -56,10 +71,21 @@ describe("Etapa Imagem", () => {
     const user = userEvent.setup();
     render(
       <WizardProvider>
-        <EtapaImagem />
+        <ComTipo>
+          <EtapaImagem />
+        </ComTipo>
       </WizardProvider>
     );
     await user.click(screen.getByRole("button", { name: /Próximo/ }));
     expect(push).toHaveBeenCalledWith("/criar/revisao");
+  });
+
+  it("redireciona para /criar/tipo quando não há tipo definido", () => {
+    render(
+      <WizardProvider>
+        <EtapaImagem />
+      </WizardProvider>
+    );
+    expect(replace).toHaveBeenCalledWith("/criar/tipo");
   });
 });

@@ -4,11 +4,9 @@ import { useEffect, useState } from "react";
 import { resolverTemaInicial, salvarTema, type Tema } from "@/lib/tema";
 
 export function ThemeToggle() {
-  const [tema, setTema] = useState<Tema>("claro");
-
-  useEffect(() => {
-    setTema(resolverTemaInicial());
-  }, []);
+  const [tema, setTema] = useState<Tema>(() =>
+    typeof window === "undefined" ? "claro" : resolverTemaInicial()
+  );
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", tema === "escuro");
