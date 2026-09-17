@@ -615,7 +615,7 @@ O documento gerado (`DocumentoCroqui`, Task 15) nunca usa isso — é só para a
 - Test: `lib/tema.test.ts`
 - Create: `components/ui/ThemeToggle.tsx`
 - Test: `components/ui/ThemeToggle.test.tsx`
-- Modify: `tailwind.config.ts`, `app/layout.tsx`
+- Modify: `app/globals.css` (Tailwind v4 é CSS-first neste projeto — sem `tailwind.config.ts`, ver Task 1), `app/layout.tsx`
 
 **Interfaces:**
 - Produces: `Tema` (`"claro" | "escuro"`), `CHAVE_TEMA`, `obterTemaSalvo()`, `salvarTema(tema)`, `obterTemaPreferidoSistema()`, `resolverTemaInicial()`, componente `<ThemeToggle />`
@@ -705,7 +705,13 @@ Expected: PASS (5 testes)
 
 - [ ] **Step 4: Configurar o Tailwind para tema por classe**
 
-Modify `tailwind.config.ts` — adicionar `darkMode: "class"` no objeto de configuração exportado.
+O projeto usa Tailwind v4 (config CSS-first — `create-next-app` não gerou `tailwind.config.ts`; ver Task 1). Em vez de um arquivo de config, adicione ao topo de `app/globals.css`, logo após o `@import "tailwindcss";` existente:
+
+```css
+@custom-variant dark (&:where(.dark, .dark *));
+```
+
+Isso faz o Tailwind v4 tratar `dark:` como dependente da classe `.dark` no elemento raiz (que o script anti-flash do Step 8 e o `ThemeToggle` controlam), em vez de só `prefers-color-scheme`. Não crie nem edite nenhum `tailwind.config.ts` — ele não existe neste projeto.
 
 - [ ] **Step 5: Escrever o teste do componente (vai falhar)**
 
@@ -785,11 +791,17 @@ Expected: PASS
 
 - [ ] **Step 8: Integrar no `app/layout.tsx` com script anti-flash**
 
+O `create-next-app` desta versão já configura as fontes Geist via `next/font/google` (variáveis `--font-geist-sans`/`--font-geist-mono`, referenciadas em `app/globals.css`). Preserve essa configuração — não a remova — ao adicionar o script anti-flash, o cabeçalho e o `<ThemeToggle />`:
+
 ```tsx
 import type { ReactNode } from "react";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { CHAVE_TEMA } from "@/lib/tema";
+
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata = {
   title: "Produto Coringa — Madel",
@@ -798,7 +810,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -814,7 +826,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           }}
         />
       </head>
-      <body className="bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
+      <body className="min-h-full bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
         <header className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
           <span className="font-semibold">MADEL — Produto Coringa</span>
           <ThemeToggle />
@@ -834,7 +846,7 @@ Expected: build passa sem erros
 - [ ] **Step 10: Commit**
 
 ```bash
-git add lib/tema.ts lib/tema.test.ts components/ui/ThemeToggle.tsx components/ui/ThemeToggle.test.tsx tailwind.config.ts app/layout.tsx
+git add lib/tema.ts lib/tema.test.ts components/ui/ThemeToggle.tsx components/ui/ThemeToggle.test.tsx app/globals.css app/layout.tsx
 git commit -m "Adiciona tema claro/escuro da interface"
 ```
 
