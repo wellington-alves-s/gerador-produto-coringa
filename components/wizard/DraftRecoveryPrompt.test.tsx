@@ -1,10 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { WizardProvider } from "@/lib/wizard-context";
+import { WizardProvider, useWizard } from "@/lib/wizard-context";
 import { DraftRecoveryPrompt } from "./DraftRecoveryPrompt";
 import { salvarRascunho } from "@/lib/wizard-storage";
 import { ESTADO_INICIAL } from "@/lib/pedido";
+
+function TipoAtual() {
+  const { estado } = useWizard();
+  return <span data-testid="tipo-atual">{estado.tipo ?? "nenhum"}</span>;
+}
 
 const push = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -40,6 +45,28 @@ describe("DraftRecoveryPrompt", () => {
 
     expect(push).toHaveBeenCalledWith("/criar/especificacoes");
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("só navega depois que o estado do rascunho já está disponível no contexto (evita voltar para /criar/tipo)", async () => {
+    salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria", ultimaEtapa: "imagem" });
+    const user = userEvent.setup();
+    push.mockImplementation(() => {
+      // Se a navegação disparasse no mesmo clique que o dispatch (antes do
+      // React commitar o novo estado), o contexto ainda mostraria "nenhum"
+      // aqui — e a página de destino, guardada por "if (!estado.tipo)",
+      // mandaria de volta para /criar/tipo.
+      expect(screen.getByTestId("tipo-atual").textContent).toBe("esquadria");
+    });
+
+    render(
+      <WizardProvider>
+        <DraftRecoveryPrompt />
+        <TipoAtual />
+      </WizardProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Continuar" }));
+    expect(push).toHaveBeenCalledWith("/criar/imagem");
   });
 
   it("descarta o rascunho ao clicar em Começar nova", async () => {

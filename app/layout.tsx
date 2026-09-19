@@ -41,8 +41,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
-        <header className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-gray-800">
-          <span className="font-semibold">MADEL — Produto Coringa</span>
+        <header className="flex items-center justify-between border-b-2 border-red-700 bg-black px-4 py-3">
+          <div className="flex items-center gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/marca/logo-madel.png" alt="Madel" className="h-8 w-auto" />
+            <span className="font-semibold text-white">Produto Coringa</span>
+          </div>
           <ThemeToggle />
         </header>
         <main>{children}</main>

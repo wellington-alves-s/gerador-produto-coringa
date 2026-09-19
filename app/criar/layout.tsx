@@ -6,7 +6,7 @@ export default function CriarLayout({ children }: { children: ReactNode }) {
   return (
     <WizardProvider>
       <DraftRecoveryPrompt />
-      <div className="mx-auto max-w-2xl px-4 py-8">{children}</div>
+      <div className="mx-auto max-w-5xl px-4 py-8">{children}</div>
     </WizardProvider>
   );
 }

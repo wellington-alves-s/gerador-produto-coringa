@@ -48,6 +48,36 @@ describe("reducerPedido", () => {
     const alterado = reducerPedido(ESTADO_INICIAL, { type: "ATUALIZAR_PEDIDO", campo: "cliente", valor: "X" });
     expect(reducerPedido(alterado, { type: "REINICIAR" })).toEqual(ESTADO_INICIAL);
   });
+
+  it("ATUALIZAR_ESPECIFICACAO limpa campos dependentes quando a condição deixa de valer", () => {
+    const comTipo = reducerPedido(ESTADO_INICIAL, { type: "DEFINIR_TIPO", tipo: "porta-marcenaria" });
+    const comCava = reducerPedido(comTipo, { type: "ATUALIZAR_ESPECIFICACAO", campoId: "cava", valor: "FOLEADA" });
+    const comCavaLados = reducerPedido(comCava, {
+      type: "ATUALIZAR_ESPECIFICACAO",
+      campoId: "cavaLados",
+      valor: "1 LADO",
+    });
+    expect(comCavaLados.especificacoes.cavaLados).toBe("1 LADO");
+
+    const semCava = reducerPedido(comCavaLados, { type: "ATUALIZAR_ESPECIFICACAO", campoId: "cava", valor: "" });
+    expect(semCava.especificacoes.cavaLados).toBe("");
+  });
+
+  it("ATUALIZAR_ESPECIFICACAO mantém o campo dependente quando a condição continua valendo", () => {
+    const comTipo = reducerPedido(ESTADO_INICIAL, { type: "DEFINIR_TIPO", tipo: "porta-marcenaria" });
+    const comCava = reducerPedido(comTipo, { type: "ATUALIZAR_ESPECIFICACAO", campoId: "cava", valor: "FOLEADA" });
+    const comCavaLados = reducerPedido(comCava, {
+      type: "ATUALIZAR_ESPECIFICACAO",
+      campoId: "cavaLados",
+      valor: "1 LADO",
+    });
+    const trocaCava = reducerPedido(comCavaLados, {
+      type: "ATUALIZAR_ESPECIFICACAO",
+      campoId: "cava",
+      valor: "SEM FOLEAR",
+    });
+    expect(trocaCava.especificacoes.cavaLados).toBe("1 LADO");
+  });
 });
 
 describe("WizardProvider — autosave", () => {

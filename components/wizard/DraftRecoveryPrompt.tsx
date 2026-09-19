@@ -1,22 +1,42 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWizard } from "@/lib/wizard-context";
 import { carregarRascunho, limparRascunho, existeRascunho } from "@/lib/wizard-storage";
 
 export function DraftRecoveryPrompt() {
-  const { dispatch } = useWizard();
+  const { estado, dispatch } = useWizard();
   const router = useRouter();
-  const [mostrar, setMostrar] = useState(() =>
-    typeof window === "undefined" ? false : existeRascunho()
-  );
+  // Sempre começa fechado (igual ao HTML renderizado no servidor, que não tem
+  // acesso ao localStorage) — checar existeRascunho() já na primeira renderização
+  // fazia o React hidratar com um resultado diferente do HTML do servidor,
+  // causando o erro de hydration mismatch. Só depois de montar no navegador é
+  // que verificamos o rascunho de verdade.
+  const [mostrar, setMostrar] = useState(false);
+  const destinoPendente = useRef<string | null>(null);
+
+  useEffect(() => {
+    // Sincronizando com localStorage, que só existe no cliente (ver justificativa acima).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMostrar(existeRascunho());
+  }, []);
+
+  // Só navega depois que o estado do rascunho já foi commitado no contexto —
+  // disparar o router.push no mesmo clique que o dispatch corria o risco de a
+  // página de destino montar (e checar estado.tipo) antes do CARREGAR_ESTADO
+  // ser aplicado, mandando o usuário de volta para /criar/tipo.
+  useEffect(() => {
+    if (!destinoPendente.current) return;
+    router.push(destinoPendente.current);
+    destinoPendente.current = null;
+  }, [estado, router]);
 
   function continuar() {
     const rascunho = carregarRascunho();
     if (rascunho) {
+      destinoPendente.current = `/criar/${rascunho.ultimaEtapa}`;
       dispatch({ type: "CARREGAR_ESTADO", estado: rascunho });
-      router.push(`/criar/${rascunho.ultimaEtapa}`);
     }
     setMostrar(false);
   }

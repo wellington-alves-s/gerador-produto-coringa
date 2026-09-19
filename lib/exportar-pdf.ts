@@ -1,8 +1,8 @@
-import html2canvas from "html2canvas";
 import { jsPDF } from "jspdf";
+import { capturarDocumentoLargo } from "./captura-documento";
 
 export async function exportarComoPdf(elemento: HTMLElement, nomeArquivo: string): Promise<void> {
-  const canvas = await html2canvas(elemento, { scale: 2, backgroundColor: "#ffffff", useCORS: true });
+  const canvas = await capturarDocumentoLargo(elemento);
   const pdf = new jsPDF("l", "mm", "a4");
   const larguraPdf = pdf.internal.pageSize.getWidth();
   const alturaPdf = pdf.internal.pageSize.getHeight();

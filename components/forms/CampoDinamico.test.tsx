@@ -36,6 +36,16 @@ describe("CampoDinamico", () => {
     expect(aoAlterar).toHaveBeenCalledWith("2 LADOS");
   });
 
+  it("campo de opção única desmarca ao clicar de novo na opção já selecionada", async () => {
+    const aoAlterar = vi.fn();
+    const campo: Campo = { id: "friso", tipo: "opcao-unica", label: "Friso", opcoes: ["1 LADO", "2 LADOS"] };
+    render(<CampoDinamico campo={campo} valor="2 LADOS" aoAlterar={aoAlterar} />);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByLabelText("2 LADOS"));
+    expect(aoAlterar).toHaveBeenCalledWith("");
+  });
+
   it("campo de múltipla escolha acumula seleções separadas por |", async () => {
     const aoAlterar = vi.fn();
     const campo: Campo = { id: "tipoFolha", tipo: "multipla-escolha", label: "Tipo", opcoes: ["FRISADA", "RASGADA"] };
@@ -48,5 +58,35 @@ describe("CampoDinamico", () => {
     rerender(<CampoDinamico campo={campo} valor="FRISADA" aoAlterar={aoAlterar} />);
     await user.click(screen.getByLabelText("RASGADA"));
     expect(aoAlterar).toHaveBeenCalledWith("FRISADA|RASGADA");
+  });
+
+  it("campo de múltipla escolha desmarca outras opções do mesmo grupo excludente ao marcar uma nova", async () => {
+    const aoAlterar = vi.fn();
+    const campo: Campo = {
+      id: "categoria",
+      tipo: "multipla-escolha",
+      label: "Categoria",
+      opcoes: ["PANORÂMICO", "SEMI-PANORÂMICO", "QUADRICULADO", "VENEZIANA"],
+      gruposExcludentes: [["PANORÂMICO", "SEMI-PANORÂMICO", "QUADRICULADO"]],
+    };
+    render(<CampoDinamico campo={campo} valor="PANORÂMICO|VENEZIANA" aoAlterar={aoAlterar} />);
+
+    const user = userEvent.setup();
+    await user.click(screen.getByLabelText("QUADRICULADO"));
+    expect(aoAlterar).toHaveBeenCalledWith("VENEZIANA|QUADRICULADO");
+  });
+
+  it("aplica destaque de erro (anel vermelho piscando) quando erro=true", () => {
+    const campo: Campo = { id: "friso", tipo: "opcao-unica", label: "Friso", opcoes: ["1 LADO", "2 LADOS"] };
+    render(<CampoDinamico campo={campo} valor="" aoAlterar={vi.fn()} erro />);
+
+    expect(screen.getByText("Friso").closest("fieldset")).toHaveClass("ring-red-600", "animate-pulse");
+  });
+
+  it("não aplica destaque de erro quando erro=false ou ausente", () => {
+    const campo: Campo = { id: "friso", tipo: "opcao-unica", label: "Friso", opcoes: ["1 LADO", "2 LADOS"] };
+    render(<CampoDinamico campo={campo} valor="" aoAlterar={vi.fn()} />);
+
+    expect(screen.getByText("Friso").closest("fieldset")).not.toHaveClass("ring-red-600");
   });
 });

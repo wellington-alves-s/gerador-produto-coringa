@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, type ReactNode } from "react";
 import { WizardProvider, useWizard } from "@/lib/wizard-context";
@@ -41,6 +41,22 @@ describe("Etapa Revisão", () => {
     await user.type(screen.getByLabelText("Fornecedor"), "Marcenaria XYZ");
 
     expect(screen.getByText("Fornecedor: Marcenaria XYZ")).toBeInTheDocument();
+  });
+
+  it("permite preencher a informação adicional e ela aparece no documento", async () => {
+    const user = userEvent.setup();
+    render(
+      <WizardProvider>
+        <ComTipo>
+          <EtapaRevisao />
+        </ComTipo>
+      </WizardProvider>
+    );
+
+    await user.type(screen.getByLabelText(/Informação adicional/), "Vidro fumê");
+
+    const documento = within(screen.getByTestId("documento-croqui"));
+    expect(documento.getByText("Vidro fumê")).toBeInTheDocument();
   });
 
   it("Gerar Croqui avança para a tela de Resultado", async () => {

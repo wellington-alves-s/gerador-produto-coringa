@@ -20,8 +20,12 @@ export default function EtapaRevisao() {
     }
   }, [estado.tipo, router]);
 
-  function atualizarCompra(campo: keyof typeof estado.compra, valor: string) {
+  function atualizarCompra(campo: "fornecedor" | "custo", valor: string) {
     dispatch({ type: "ATUALIZAR_COMPRA", campo, valor });
+  }
+
+  function atualizarNotaAdicional(valor: string) {
+    dispatch({ type: "ATUALIZAR_PEDIDO", campo: "notaAdicional", valor });
   }
 
   if (!estado.tipo) return null;
@@ -31,9 +35,21 @@ export default function EtapaRevisao() {
       <StepIndicator etapaAtual="revisao" />
       <h1 className="mb-6 text-2xl font-semibold">Revisar encomenda</h1>
 
-      <div className="mb-6 overflow-x-auto">
-        <DocumentoCroqui estado={estado} />
+      <div className="relative mr-[calc(50%-50vw)] ml-[calc(50%-50vw)] mb-6 w-screen overflow-x-auto px-4">
+        <div className="mx-auto max-w-[1600px]">
+          <DocumentoCroqui estado={estado} />
+        </div>
       </div>
+
+      <label className="mb-6 block">
+        <span className="mb-1 block text-sm font-medium">Informação adicional (opcional)</span>
+        <textarea
+          rows={2}
+          className="w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+          value={estado.pedido.notaAdicional}
+          onChange={(e) => atualizarNotaAdicional(e.target.value)}
+        />
+      </label>
 
       <details className="mb-6 rounded-md border p-4 dark:border-gray-700">
         <summary className="cursor-pointer font-medium">
@@ -56,6 +72,14 @@ export default function EtapaRevisao() {
               onChange={(e) => atualizarCompra("custo", e.target.value)}
             />
           </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={estado.compra.tabelaMadel}
+              onChange={() => dispatch({ type: "ALTERNAR_TABELA_MADEL" })}
+            />
+            <span className="text-sm font-medium">Tabela Madel</span>
+          </label>
         </div>
       </details>
 
@@ -63,14 +87,14 @@ export default function EtapaRevisao() {
         <button
           type="button"
           onClick={() => router.push("/criar/imagem")}
-          className="rounded-md border px-5 py-2 dark:border-gray-700"
+          className="rounded-md bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
         >
           ← Voltar
         </button>
         <button
           type="button"
           onClick={() => router.push("/criar/resultado")}
-          className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600"
+          className="rounded-md bg-green-600 px-5 py-2 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
         >
           Gerar Croqui
         </button>

@@ -67,6 +67,31 @@ describe("Etapa Imagem", () => {
     expect(screen.queryByAltText("Imagem selecionada")).toBeNull();
   });
 
+  it("clicar no botão de olho abre a imagem da biblioteca em tamanho maior numa nova aba", async () => {
+    const user = userEvent.setup();
+    const abrirJanela = vi.fn();
+    vi.stubGlobal("open", abrirJanela);
+
+    render(
+      <WizardProvider>
+        <ComTipo>
+          <EtapaImagem />
+        </ComTipo>
+      </WizardProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Ver Porta Balcão Arco em tamanho maior" }));
+
+    expect(abrirJanela).toHaveBeenCalledWith(
+      "/biblioteca/produtos/porta-arco.jpg",
+      "_blank",
+      "noopener,noreferrer"
+    );
+    expect(screen.queryByAltText("Imagem selecionada")).toBeNull();
+
+    vi.unstubAllGlobals();
+  });
+
   it("Próximo avança para a Revisão mesmo sem imagem escolhida", async () => {
     const user = userEvent.setup();
     render(

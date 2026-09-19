@@ -90,7 +90,7 @@ export default function EtapaPedido() {
         <button
           type="button"
           onClick={() => router.push("/criar/tipo")}
-          className="rounded-md border px-5 py-2 dark:border-gray-700"
+          className="rounded-md bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
         >
           ← Voltar
         </button>

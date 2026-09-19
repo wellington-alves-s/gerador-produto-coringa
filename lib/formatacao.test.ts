@@ -2,7 +2,9 @@ import { describe, it, expect } from "vitest";
 import {
   atualizarBufferMedida,
   formatarBufferMedida,
+  formatarMedidaParaExibicao,
   bufferMedidaParaMetros,
+  bufferInicialMedida,
   BUFFER_MEDIDA_INICIAL,
 } from "./formatacao";
 
@@ -44,5 +46,36 @@ describe("formatação de medida (padrão brasileiro)", () => {
 
   it("converte buffer para metros", () => {
     expect(bufferMedidaParaMetros("2100")).toBe(2.1);
+  });
+
+  it("suporta casas decimais customizadas (ex: 2 casas para cm)", () => {
+    let buffer = bufferInicialMedida(2);
+    expect(formatarBufferMedida(buffer, 2)).toBe("0,00");
+
+    for (const digito of ["1", "5", "0"]) {
+      buffer = atualizarBufferMedida(buffer, formatarBufferMedida(buffer, 2) + digito, 2);
+    }
+    expect(formatarBufferMedida(buffer, 2)).toBe("1,50");
+  });
+
+  it("suporta casas inteiras customizadas (ex: 2 dígitos antes da vírgula, para medidas como 14,0 cm)", () => {
+    let buffer = bufferInicialMedida(1, 2);
+    expect(formatarBufferMedida(buffer, 1, 2)).toBe("00,0");
+
+    for (const digito of ["1", "4", "0"]) {
+      buffer = atualizarBufferMedida(buffer, formatarBufferMedida(buffer, 1, 2) + digito, 1, 2);
+    }
+    expect(formatarBufferMedida(buffer, 1, 2)).toBe("14,0");
+  });
+
+  it("formatarMedidaParaExibicao remove zero à esquerda da parte inteira (só na exibição)", () => {
+    expect(formatarMedidaParaExibicao("050", 1, 2)).toBe("5,0");
+    expect(formatarMedidaParaExibicao("140", 1, 2)).toBe("14,0");
+    expect(formatarMedidaParaExibicao("000", 1, 2)).toBe("0,0");
+  });
+
+  it("formatarMedidaParaExibicao não altera o valor quando há só 1 casa inteira (padrão)", () => {
+    expect(formatarMedidaParaExibicao("2100")).toBe("2,100");
+    expect(formatarMedidaParaExibicao(BUFFER_MEDIDA_INICIAL)).toBe("0,000");
   });
 });

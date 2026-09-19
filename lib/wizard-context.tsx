@@ -3,7 +3,9 @@
 import { createContext, useCallback, useContext, useEffect, useReducer, useRef, type Dispatch, type ReactNode } from "react";
 import { ESTADO_INICIAL, type EstadoPedido, type EtapaId } from "./pedido";
 import { existeRascunho, salvarRascunho } from "./wizard-storage";
-import type { TipoProdutoId } from "@/produtos/tipos";
+import { PRODUTOS } from "@/produtos";
+import type { Campo, TipoProdutoId } from "@/produtos/tipos";
+import { dependenciaAtiva } from "@/produtos/validacao";
 
 export type AcaoPedido =
   | { type: "DEFINIR_TIPO"; tipo: TipoProdutoId }
@@ -12,10 +14,31 @@ export type AcaoPedido =
   | { type: "DEFINIR_IMAGEM_BIBLIOTECA"; bibliotecaId: string }
   | { type: "DEFINIR_IMAGEM_UPLOAD"; dataUrl: string }
   | { type: "REMOVER_IMAGEM" }
-  | { type: "ATUALIZAR_COMPRA"; campo: keyof EstadoPedido["compra"]; valor: string }
+  | { type: "ATUALIZAR_COMPRA"; campo: "fornecedor" | "custo"; valor: string }
+  | { type: "ALTERNAR_TABELA_MADEL" }
   | { type: "IR_PARA_ETAPA"; etapa: EtapaId }
   | { type: "CARREGAR_ESTADO"; estado: EstadoPedido }
   | { type: "REINICIAR" };
+
+function limparEspecificacoesDependentesInativas(
+  especificacoes: Record<string, string>,
+  campos: Campo[]
+): Record<string, string> {
+  let resultado = especificacoes;
+  let mudou = true;
+  while (mudou) {
+    mudou = false;
+    for (const campo of campos) {
+      if (!campo.dependeDe || !resultado[campo.id]) continue;
+      const dependeAtivo = dependenciaAtiva(resultado[campo.dependeDe.campoId], campo.dependeDe.valores);
+      if (!dependeAtivo) {
+        resultado = { ...resultado, [campo.id]: "" };
+        mudou = true;
+      }
+    }
+  }
+  return resultado;
+}
 
 export function reducerPedido(estado: EstadoPedido, acao: AcaoPedido): EstadoPedido {
   switch (acao.type) {
@@ -23,8 +46,11 @@ export function reducerPedido(estado: EstadoPedido, acao: AcaoPedido): EstadoPed
       return { ...estado, tipo: acao.tipo, especificacoes: {} };
     case "ATUALIZAR_PEDIDO":
       return { ...estado, pedido: { ...estado.pedido, [acao.campo]: acao.valor } };
-    case "ATUALIZAR_ESPECIFICACAO":
-      return { ...estado, especificacoes: { ...estado.especificacoes, [acao.campoId]: acao.valor } };
+    case "ATUALIZAR_ESPECIFICACAO": {
+      const especificacoes = { ...estado.especificacoes, [acao.campoId]: acao.valor };
+      const campos = estado.tipo ? PRODUTOS[estado.tipo].campos : [];
+      return { ...estado, especificacoes: limparEspecificacoesDependentesInativas(especificacoes, campos) };
+    }
     case "DEFINIR_IMAGEM_BIBLIOTECA":
       return { ...estado, imagem: { origem: "biblioteca", bibliotecaId: acao.bibliotecaId, uploadDataUrl: null } };
     case "DEFINIR_IMAGEM_UPLOAD":
@@ -33,6 +59,8 @@ export function reducerPedido(estado: EstadoPedido, acao: AcaoPedido): EstadoPed
       return { ...estado, imagem: { origem: null, bibliotecaId: null, uploadDataUrl: null } };
     case "ATUALIZAR_COMPRA":
       return { ...estado, compra: { ...estado.compra, [acao.campo]: acao.valor } };
+    case "ALTERNAR_TABELA_MADEL":
+      return { ...estado, compra: { ...estado.compra, tabelaMadel: !estado.compra.tabelaMadel } };
     case "IR_PARA_ETAPA":
       return { ...estado, ultimaEtapa: acao.etapa };
     case "CARREGAR_ESTADO":

@@ -2,11 +2,11 @@
 
 import type { CampoTexto as CampoTextoConfig } from "@/produtos/tipos";
 
-type Props = { campo: CampoTextoConfig; valor: string; aoAlterar: (novoValor: string) => void };
+type Props = { campo: CampoTextoConfig; valor: string; aoAlterar: (novoValor: string) => void; erro?: boolean };
 
-export function CampoTexto({ campo, valor, aoAlterar }: Props) {
+export function CampoTexto({ campo, valor, aoAlterar, erro }: Props) {
   return (
-    <label className="block">
+    <label className={`block ${erro ? "animate-pulse rounded-md p-2 ring-2 ring-red-600" : ""}`}>
       <span className="mb-1 block text-sm font-medium">
         {campo.label} {campo.obrigatorio && <span className="text-red-700">*</span>}
       </span>

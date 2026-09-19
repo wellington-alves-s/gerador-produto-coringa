@@ -20,8 +20,10 @@ export default function EtapaResultado() {
     setExportando(true);
     try {
       await exportarComoPdf(referenciaDocumento.current, `encomenda-especial-${estado.tipo}.pdf`);
-    } catch {
-      setErro("Não foi possível gerar o PDF. Tente novamente.");
+    } catch (erroCapturado) {
+      console.error("Falha ao gerar PDF:", erroCapturado);
+      const detalhe = erroCapturado instanceof Error ? erroCapturado.message : String(erroCapturado);
+      setErro(`Não foi possível gerar o PDF. Tente novamente. (${detalhe})`);
     } finally {
       setExportando(false);
     }
@@ -33,8 +35,10 @@ export default function EtapaResultado() {
     setExportando(true);
     try {
       await exportarComoImagem(referenciaDocumento.current, `encomenda-especial-${estado.tipo}.png`);
-    } catch {
-      setErro("Não foi possível gerar a imagem. Tente novamente.");
+    } catch (erroCapturado) {
+      console.error("Falha ao gerar imagem:", erroCapturado);
+      const detalhe = erroCapturado instanceof Error ? erroCapturado.message : String(erroCapturado);
+      setErro(`Não foi possível gerar a imagem. Tente novamente. (${detalhe})`);
     } finally {
       setExportando(false);
     }
@@ -59,13 +63,22 @@ export default function EtapaResultado() {
     <div>
       <h1 className="mb-6 text-2xl font-semibold">Encomenda gerada</h1>
 
-      <div ref={referenciaDocumento} className="mb-6 overflow-x-auto">
-        <DocumentoCroqui estado={estado} />
+      <div className="relative mr-[calc(50%-50vw)] ml-[calc(50%-50vw)] mb-6 w-screen overflow-x-auto px-4">
+        <div ref={referenciaDocumento} className="mx-auto max-w-[1600px]">
+          <DocumentoCroqui estado={estado} />
+        </div>
       </div>
 
       {erro && <p className="mb-4 text-sm text-red-700">{erro}</p>}
 
       <div className="flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={() => router.push("/criar/revisao")}
+          className="rounded-md bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
+        >
+          ← Voltar para Revisão
+        </button>
         <button
           type="button"
           disabled={exportando}
@@ -81,13 +94,6 @@ export default function EtapaResultado() {
           className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40 dark:bg-red-600"
         >
           Baixar Imagem
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push("/criar/revisao")}
-          className="rounded-md border px-5 py-2 dark:border-gray-700"
-        >
-          ← Voltar para Revisão
         </button>
       </div>
     </div>

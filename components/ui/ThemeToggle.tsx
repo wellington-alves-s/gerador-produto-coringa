@@ -23,7 +23,7 @@ export function ThemeToggle() {
       type="button"
       onClick={alternar}
       aria-label={tema === "claro" ? "Ativar tema escuro" : "Ativar tema claro"}
-      className="rounded-full p-2 text-xl leading-none hover:bg-black/5 dark:hover:bg-white/10"
+      className="rounded-full p-2 text-xl leading-none hover:bg-white/10"
     >
       {tema === "claro" ? "🌙" : "☀️"}
     </button>

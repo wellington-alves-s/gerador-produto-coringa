@@ -12,6 +12,7 @@ export type EstadoPedido = {
     vendedor: string;
     loja: string;
     descricao: string;
+    notaAdicional: string;
   };
   especificacoes: Record<string, string>;
   imagem: {
@@ -22,14 +23,15 @@ export type EstadoPedido = {
   compra: {
     fornecedor: string;
     custo: string;
+    tabelaMadel: boolean;
   };
 };
 
 export const ESTADO_INICIAL: EstadoPedido = {
   tipo: null,
   ultimaEtapa: "tipo",
-  pedido: { cliente: "", numeroPedido: "", data: "", vendedor: "", loja: "", descricao: "" },
+  pedido: { cliente: "", numeroPedido: "", data: "", vendedor: "", loja: "", descricao: "", notaAdicional: "" },
   especificacoes: {},
   imagem: { origem: null, bibliotecaId: null, uploadDataUrl: null },
-  compra: { fornecedor: "", custo: "" },
+  compra: { fornecedor: "", custo: "", tabelaMadel: false },
 };
