@@ -121,7 +121,33 @@ function aproximarLarguraPorDom(clone: HTMLElement, razaoAlvo: number, larguraIn
 // testes conseguirem simular um cenário "sem divergência" de forma exata.
 export const FATOR_VIES_LARGURA = 0.985;
 
-export async function capturarDocumentoLargo(elemento: HTMLElement, razaoAlvo?: number): Promise<HTMLCanvasElement> {
+// html2canvas lê a cor de fundo do <html> e do <body> da página, e o tema escuro usa
+// `dark:bg-gray-950` — uma cor `oklch()` que ele não entende ("unsupported color function
+// oklch"), derrubando o PDF e a imagem. Durante a captura trocamos esse fundo por um hex
+// equivalente (gray-950 no escuro, branco no claro), sem piscar a tela, e restauramos depois.
+const FUNDO_ESCURO_HEX = "#030712";
+const FUNDO_CLARO_HEX = "#ffffff";
+
+async function comFundoCompativelComHtml2canvas<T>(acao: () => Promise<T>): Promise<T> {
+  const raiz = document.documentElement;
+  const corpo = document.body;
+  const anterior = { raiz: raiz.style.backgroundColor, corpo: corpo.style.backgroundColor };
+  const cor = raiz.classList.contains("dark") ? FUNDO_ESCURO_HEX : FUNDO_CLARO_HEX;
+  raiz.style.backgroundColor = cor;
+  corpo.style.backgroundColor = cor;
+  try {
+    return await acao();
+  } finally {
+    raiz.style.backgroundColor = anterior.raiz;
+    corpo.style.backgroundColor = anterior.corpo;
+  }
+}
+
+export function capturarDocumentoLargo(elemento: HTMLElement, razaoAlvo?: number): Promise<HTMLCanvasElement> {
+  return comFundoCompativelComHtml2canvas(() => capturarSemAjusteDeFundo(elemento, razaoAlvo));
+}
+
+async function capturarSemAjusteDeFundo(elemento: HTMLElement, razaoAlvo?: number): Promise<HTMLCanvasElement> {
   let larguraFinal = LARGURA_CAPTURA;
 
   if (razaoAlvo) {

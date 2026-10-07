@@ -144,4 +144,46 @@ describe("capturarDocumentoLargo", () => {
       html2canvasMock.mockResolvedValue({ width: 2000, height: 900 });
     }
   });
+
+  it("troca o fundo do <html>/<body> por um hex durante a captura (html2canvas não lê oklch do tema escuro) e restaura depois", async () => {
+    const fundosDuranteACaptura: string[] = [];
+    html2canvasMock.mockImplementation(async () => {
+      fundosDuranteACaptura.push(`${document.documentElement.style.backgroundColor}|${document.body.style.backgroundColor}`);
+      return { width: 2000, height: 900 };
+    });
+    const elemento = document.createElement("div");
+    document.body.appendChild(elemento);
+    document.documentElement.classList.add("dark");
+    document.body.style.backgroundColor = "rgb(1, 2, 3)";
+
+    try {
+      await capturarDocumentoLargo(elemento);
+      expect(fundosDuranteACaptura).toEqual(["rgb(3, 7, 18)|rgb(3, 7, 18)"]); // #030712
+      expect(document.body.style.backgroundColor).toBe("rgb(1, 2, 3)");
+      expect(document.documentElement.style.backgroundColor).toBe("");
+
+      document.documentElement.classList.remove("dark");
+      fundosDuranteACaptura.length = 0;
+      await capturarDocumentoLargo(elemento);
+      expect(fundosDuranteACaptura).toEqual(["rgb(255, 255, 255)|rgb(255, 255, 255)"]);
+    } finally {
+      document.documentElement.classList.remove("dark");
+      document.body.style.backgroundColor = "";
+      html2canvasMock.mockReset();
+      html2canvasMock.mockResolvedValue({ width: 2000, height: 900 });
+    }
+  });
+
+  it("restaura o fundo mesmo quando a captura falha", async () => {
+    html2canvasMock.mockRejectedValueOnce(new Error("falhou"));
+    const elemento = document.createElement("div");
+    document.body.appendChild(elemento);
+    document.body.style.backgroundColor = "rgb(9, 9, 9)";
+    try {
+      await expect(capturarDocumentoLargo(elemento)).rejects.toThrow("falhou");
+      expect(document.body.style.backgroundColor).toBe("rgb(9, 9, 9)");
+    } finally {
+      document.body.style.backgroundColor = "";
+    }
+  });
 });
