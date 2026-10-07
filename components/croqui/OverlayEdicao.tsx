@@ -10,6 +10,7 @@ import {
   criarLinha,
   criarRetangulo,
   criarTexto,
+  COR_PADRAO,
   linhaEntre,
   moverPor,
   redimensionarPorAlca,
@@ -28,7 +29,7 @@ import {
 import { carimboQuadrado, pontosAoLongo, type AreaSelecionada, type Carimbo } from "@/lib/apagamento";
 import { transformacaoSvg } from "./ElementosDesenho";
 
-export type Ferramenta = "selecionar" | TipoLinha | "texto" | "retangulo" | "apagar-area" | "borracha";
+export type Ferramenta = "selecionar" | TipoLinha | "texto" | "retangulo" | "retangulo-cheio" | "apagar-area" | "borracha";
 export const ID_IMAGEM = "imagem";
 
 type Alvo = Transformacao | ElementoDesenho;
@@ -223,10 +224,13 @@ export function OverlayEdicao({
       aoFinalizarCriacao();
       return;
     }
-    const elemento = ferramenta === "retangulo" ? criarRetangulo(p, p) : criarLinha(p, p, ferramenta);
+    const ehRetangulo = ferramenta === "retangulo" || ferramenta === "retangulo-cheio";
+    const elemento = ehRetangulo
+      ? { ...criarRetangulo(p, p), preenchimento: ferramenta === "retangulo-cheio" ? COR_PADRAO : null }
+      : criarLinha(p, p, ferramenta);
     capturar(e);
     aoCriar(elemento);
-    gestoRef.current = { tipo: "criar", variante: ferramenta, inicio: p, original: elemento };
+    gestoRef.current = { tipo: "criar", variante: ehRetangulo ? "retangulo" : (ferramenta as TipoLinha), inicio: p, original: elemento };
   }
 
   // ---------- andamento e fim dos gestos ----------
@@ -312,7 +316,13 @@ export function OverlayEdicao({
         ? atual.largura < ARRASTO_MINIMO_CRIACAO || atual.altura < ARRASTO_MINIMO_CRIACAO
         : atual.largura < ARRASTO_MINIMO_CRIACAO;
     if (pequeno) {
-      aplicar(atual.id, { ...criarComTamanhoPadrao(gesto.variante, gesto.inicio), id: atual.id });
+      const padrao = criarComTamanhoPadrao(gesto.variante, gesto.inicio);
+      // O tamanho padrão mantém o tipo de retângulo escolhido (vazado ou preenchido).
+      aplicar(atual.id, {
+        ...padrao,
+        id: atual.id,
+        ...(padrao.tipo === "retangulo" && atual.tipo === "retangulo" ? { preenchimento: atual.preenchimento } : {}),
+      } as ElementoDesenho);
     }
     aoFinalizarCriacao();
   }

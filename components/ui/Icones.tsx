@@ -51,6 +51,11 @@ export const Icone = {
       <rect x="4" y="5" width="16" height="14" rx="2" />
     </Svg>
   ),
+  RetanguloCheio: () => (
+    <Svg>
+      <rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor" />
+    </Svg>
+  ),
   ApagarArea: () => (
     <Svg>
       <rect x="4" y="5" width="16" height="14" rx="1" strokeDasharray="3 3" />

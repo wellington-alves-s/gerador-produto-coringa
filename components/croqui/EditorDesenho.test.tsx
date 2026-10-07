@@ -318,6 +318,65 @@ describe("EditorDesenho — girar, espelhar, duplicar e camadas", () => {
   });
 });
 
+describe("EditorDesenho — retângulo preenchido", () => {
+  it("a ferramenta Retângulo continua criando um retângulo vazado", () => {
+    renderizar();
+    desenharArrastando("Retângulo", [100, 100], [300, 200]);
+    expect(desenhoPersistido().elementos[0]).toMatchObject({ tipo: "retangulo", preenchimento: null });
+  });
+
+  it("a ferramenta Retângulo preenchido já cria um bloco sólido, pela mesma borda e cor", () => {
+    renderizar();
+    desenharArrastando("Retângulo preenchido", [100, 100], [300, 200]);
+    expect(desenhoPersistido().elementos[0]).toMatchObject({
+      tipo: "retangulo",
+      cx: 200,
+      cy: 150,
+      largura: 200,
+      altura: 100,
+      cor: "#000000",
+      preenchimento: "#000000",
+    });
+    expect(screen.getByLabelText("Preencher")).toBeChecked();
+    expect(screen.getByRole("button", { name: "Selecionar" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("só clicar com Retângulo preenchido cria o tamanho padrão e continua preenchido", () => {
+    renderizar();
+    desenharArrastando("Retângulo preenchido", [500, 400], [502, 401]);
+    expect(desenhoPersistido().elementos[0]).toMatchObject({ largura: 200, altura: 120, preenchimento: "#000000" });
+  });
+
+  it("o retângulo preenchido aparece como bloco sólido no desenho", () => {
+    renderizar();
+    desenharArrastando("Retângulo preenchido", [100, 100], [300, 200]);
+    const retangulo = screen.getByTestId("camada-elementos").querySelector("g[data-elemento=retangulo] rect") as SVGRectElement;
+    expect(retangulo).toHaveAttribute("fill", "#000000");
+  });
+
+  it("trocar a Cor de um bloco sólido muda borda e preenchimento juntos", () => {
+    renderizar();
+    desenharArrastando("Retângulo preenchido", [100, 100], [300, 200]);
+    fireEvent.change(screen.getByLabelText("Cor"), { target: { value: "#ff0000" } });
+    expect(desenhoPersistido().elementos[0]).toMatchObject({ cor: "#ff0000", preenchimento: "#ff0000" });
+  });
+
+  it("com preenchimento de outra cor, a Cor muda só a borda", () => {
+    renderizar();
+    desenharArrastando("Retângulo preenchido", [100, 100], [300, 200]);
+    fireEvent.change(screen.getByLabelText("Cor do preenchimento"), { target: { value: "#00ff00" } });
+    fireEvent.change(screen.getByLabelText("Cor"), { target: { value: "#ff0000" } });
+    expect(desenhoPersistido().elementos[0]).toMatchObject({ cor: "#ff0000", preenchimento: "#00ff00" });
+  });
+
+  it("dá para desmarcar o preenchimento e virar um retângulo vazado", () => {
+    renderizar();
+    desenharArrastando("Retângulo preenchido", [100, 100], [300, 200]);
+    fireEvent.click(screen.getByLabelText("Preencher"));
+    expect(desenhoPersistido().elementos[0].preenchimento).toBeNull();
+  });
+});
+
 describe("EditorDesenho — propriedades", () => {
   it("cor, espessura, setas e preenchimento mudam o elemento", () => {
     renderizar();

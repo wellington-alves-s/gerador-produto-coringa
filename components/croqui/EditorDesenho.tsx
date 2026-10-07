@@ -79,13 +79,14 @@ function Grupo({ titulo, children }: { titulo: string; children: ReactNode }) {
   );
 }
 
-const FERRAMENTAS: { id: Ferramenta; rotulo: string; icone: ReactNode }[] = [
+const FERRAMENTAS: { id: Ferramenta; rotulo: string; nomeAcessivel?: string; icone: ReactNode }[] = [
   { id: "selecionar", rotulo: "Selecionar", icone: <Icone.Selecionar /> },
   { id: "linha", rotulo: "Linha", icone: <Icone.Linha /> },
   { id: "seta", rotulo: "Seta", icone: <Icone.Seta /> },
   { id: "seta-dupla", rotulo: "Seta dupla", icone: <Icone.SetaDupla /> },
   { id: "texto", rotulo: "Texto", icone: <Icone.Texto /> },
   { id: "retangulo", rotulo: "Retângulo", icone: <Icone.Retangulo /> },
+  { id: "retangulo-cheio", rotulo: "Preenchido", nomeAcessivel: "Retângulo preenchido", icone: <Icone.RetanguloCheio /> },
   { id: "apagar-area", rotulo: "Apagar área", icone: <Icone.ApagarArea /> },
   { id: "borracha", rotulo: "Borracha", icone: <Icone.Borracha /> },
 ];
@@ -339,11 +340,12 @@ export function EditorDesenho() {
   const linhaPrincipal = (
     <>
       <Grupo titulo="Ferramentas">
-        {FERRAMENTAS.map(({ id, rotulo, icone }) => (
+        {FERRAMENTAS.map(({ id, rotulo, nomeAcessivel, icone }) => (
           <button
             key={id}
             type="button"
             aria-pressed={ferramenta === id}
+            aria-label={nomeAcessivel}
             disabled={apagarIndisponivel && (id === "apagar-area" || id === "borracha")}
             title={apagarIndisponivel && (id === "apagar-area" || id === "borracha") ? "Escolha uma imagem para poder apagar partes dela" : undefined}
             onClick={() => escolherFerramenta(id)}
@@ -519,7 +521,16 @@ export function EditorDesenho() {
               aria-label="Cor"
               className="h-7 w-9 cursor-pointer rounded-lg border border-white/10 bg-transparent p-0.5"
               value={elemento.cor}
-              onChange={(e) => alterarElemento((el) => ({ ...el, cor: e.target.value }), "cor")}
+              onChange={(e) =>
+                alterarElemento(
+                  // Bloco sólido (preenchimento igual à borda): trocar a cor muda os dois de uma vez.
+                  (el) =>
+                    el.tipo === "retangulo" && el.preenchimento === el.cor
+                      ? { ...el, cor: e.target.value, preenchimento: e.target.value }
+                      : { ...el, cor: e.target.value },
+                  "cor"
+                )
+              }
             />
           </label>
 

@@ -88,7 +88,7 @@ export function BarraFlutuante({ rotulo, ancora, expandido, principal, expansao 
       ref={barraRef}
       role="toolbar"
       aria-label={rotulo}
-      className="fixed z-40 w-max max-w-[min(96vw,74rem)] rounded-[1.75rem] border border-white/10 bg-slate-900/95 p-1.5 text-slate-100 shadow-2xl ring-1 ring-black/30 backdrop-blur"
+      className="fixed z-40 w-max max-w-[min(96vw,82rem)] rounded-[1.75rem] border border-white/10 bg-slate-900/95 p-1.5 text-slate-100 shadow-2xl ring-1 ring-black/30 backdrop-blur"
       style={{ left: posicao?.x ?? 0, top: posicao?.y ?? 0, visibility: posicao ? "visible" : "hidden" }}
     >
       <div className="flex flex-wrap items-center gap-1">
