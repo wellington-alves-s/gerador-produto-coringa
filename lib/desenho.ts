@@ -6,6 +6,8 @@
  * Cada elemento é definido pelo centro (cx, cy), tamanho e rotação em graus (em torno do centro).
  */
 
+import type { Carimbo } from "./apagamento";
+
 export const LARGURA_DESENHO = 1000;
 /**
  * Proporção fixa do quadro (a própria moldura do "Desenho da peça especial"). Fixa para que a tela de
@@ -58,9 +60,11 @@ export type DesenhoEstado = {
   elementos: ElementoDesenho[];
   /** Posição da imagem do produto; null = ajustada automaticamente ao quadro. */
   imagem: Transformacao | null;
+  /** Áreas apagadas da imagem (seleção de área e borracha), relativas à imagem. Ausente = nenhuma. */
+  apagamentos?: Carimbo[];
 };
 
-export const DESENHO_INICIAL: DesenhoEstado = { elementos: [], imagem: null };
+export const DESENHO_INICIAL: DesenhoEstado = { elementos: [], imagem: null, apagamentos: [] };
 
 export const COR_PADRAO = "#000000";
 

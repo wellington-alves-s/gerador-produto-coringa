@@ -143,7 +143,16 @@ async function comFundoCompativelComHtml2canvas<T>(acao: () => Promise<T>): Prom
   }
 }
 
-export function capturarDocumentoLargo(elemento: HTMLElement, razaoAlvo?: number): Promise<HTMLCanvasElement> {
+/** A imagem com áreas apagadas é gerada em memória; capturar antes disso exportaria a imagem sem os apagamentos. */
+export async function aguardarImagensProntas(elemento: HTMLElement, limiteMs = 15000): Promise<void> {
+  const inicio = Date.now();
+  while (elemento.querySelector("[data-processando]") && Date.now() - inicio < limiteMs) {
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
+export async function capturarDocumentoLargo(elemento: HTMLElement, razaoAlvo?: number): Promise<HTMLCanvasElement> {
+  await aguardarImagensProntas(elemento);
   return comFundoCompativelComHtml2canvas(() => capturarSemAjusteDeFundo(elemento, razaoAlvo));
 }
 

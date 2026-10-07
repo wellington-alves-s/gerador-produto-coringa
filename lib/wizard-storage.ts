@@ -1,4 +1,5 @@
 import { ESTADO_INICIAL, type EstadoPedido, type EtapaId } from "./pedido";
+import { DESENHO_INICIAL } from "./desenho";
 
 export const CHAVE_RASCUNHO = "produto-coringa:rascunho";
 
@@ -27,7 +28,8 @@ export function carregarRascunho(): EstadoPedido | null {
     const dados = JSON.parse(bruto);
     if (typeof dados !== "object" || dados === null || !("pedido" in dados)) return null;
     const ultimaEtapa = ETAPAS_VALIDAS.includes(dados.ultimaEtapa) ? dados.ultimaEtapa : "tipo";
-    return { ...ESTADO_INICIAL, ...dados, ultimaEtapa };
+    // Rascunhos antigos podem não ter o desenho (ou campos novos dele).
+    return { ...ESTADO_INICIAL, ...dados, desenho: { ...DESENHO_INICIAL, ...(dados.desenho ?? {}) }, ultimaEtapa };
   } catch {
     return null;
   }

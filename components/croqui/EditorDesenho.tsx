@@ -29,6 +29,7 @@ import {
 } from "@/lib/desenho";
 import { BarraFlutuante } from "@/components/ui/BarraFlutuante";
 import { Icone } from "@/components/ui/Icones";
+import { carimboDaArea, type AreaSelecionada, type Carimbo } from "@/lib/apagamento";
 import { DocumentoCroqui } from "./DocumentoCroqui";
 import { ID_IMAGEM, OverlayEdicao, type Ferramenta } from "./OverlayEdicao";
 
@@ -85,6 +86,8 @@ const FERRAMENTAS: { id: Ferramenta; rotulo: string; icone: ReactNode }[] = [
   { id: "seta-dupla", rotulo: "Seta dupla", icone: <Icone.SetaDupla /> },
   { id: "texto", rotulo: "Texto", icone: <Icone.Texto /> },
   { id: "retangulo", rotulo: "Retângulo", icone: <Icone.Retangulo /> },
+  { id: "apagar-area", rotulo: "Apagar área", icone: <Icone.ApagarArea /> },
+  { id: "borracha", rotulo: "Borracha", icone: <Icone.Borracha /> },
 ];
 
 const CAMADAS: { operacao: OperacaoCamada; rotulo: string; curto: string; icone: ReactNode }[] = [
@@ -108,6 +111,8 @@ export function EditorDesenho() {
   });
   const [selecionadoBruto, setSelecionado] = useState<string | null>(null);
   const [ferramenta, setFerramenta] = useState<Ferramenta>("selecionar");
+  const [tamanhoBorracha, setTamanhoBorracha] = useState(40);
+  const [selecaoArea, setSelecaoArea] = useState<AreaSelecionada | null>(null);
   const [pedidoFocoTexto, setPedidoFocoTexto] = useState(0);
   const campoTextoRef = useRef<HTMLTextAreaElement>(null);
   const ancoraRef = useRef<HTMLDivElement>(null);
@@ -213,6 +218,32 @@ export function EditorDesenho() {
     despachar({ tipo: "alterar", alterar: (d) => ({ ...d, elementos: reordenarCamada(d.elementos, elemento.id, operacao) }) });
   }
 
+  const emFerramentaApagar = ferramenta === "apagar-area" || ferramenta === "borracha";
+  const quantidadeApagada = desenho.apagamentos?.length ?? 0;
+
+  function escolherFerramenta(id: Ferramenta) {
+    setFerramenta(id);
+    if (id !== "apagar-area") setSelecaoArea(null);
+  }
+
+  function apagarCarimbos(carimbos: Carimbo[], registrar: boolean) {
+    if (carimbos.length === 0) return;
+    if (registrar) despachar({ tipo: "registrar" });
+    despachar({ tipo: "alterar", alterar: (d) => ({ ...d, apagamentos: [...(d.apagamentos ?? []), ...carimbos] }) });
+  }
+
+  function apagarArea() {
+    const imagem = desenho.imagem;
+    if (!selecaoArea || !imagem) return;
+    apagarCarimbos([carimboDaArea(imagem, selecaoArea)], true);
+    setSelecaoArea(null);
+  }
+
+  function restaurarApagamentos() {
+    despachar({ tipo: "registrar" });
+    despachar({ tipo: "alterar", alterar: (d) => ({ ...d, apagamentos: [] }) });
+  }
+
   function restaurarImagem() {
     despachar({ tipo: "registrar" });
     despachar({ tipo: "alterar", alterar: (d) => ({ ...d, imagem: null }) });
@@ -250,6 +281,12 @@ export function EditorDesenho() {
       if (e.key === "Escape") {
         setFerramenta("selecionar");
         setSelecionado(null);
+        setSelecaoArea(null);
+        return;
+      }
+      if ((e.key === "Delete" || e.key === "Backspace") && selecaoArea) {
+        e.preventDefault();
+        apagarArea();
         return;
       }
       if ((e.key === "Delete" || e.key === "Backspace") && elemento) {
@@ -281,6 +318,10 @@ export function EditorDesenho() {
       aoAlterarDesenho={(alterar) => despachar({ tipo: "alterar", alterar })}
       aoCriar={criar}
       aoFinalizarCriacao={() => setFerramenta("selecionar")}
+      tamanhoBorracha={tamanhoBorracha}
+      selecaoArea={selecaoArea}
+      aoDefinirSelecaoArea={setSelecaoArea}
+      aoApagarCarimbos={(carimbos) => apagarCarimbos(carimbos, false)}
       aoEditarTexto={(id) => {
         setSelecionado(id);
         setPedidoFocoTexto((n) => n + 1);
@@ -291,7 +332,9 @@ export function EditorDesenho() {
   const alvoTransformavel = selecionado !== null;
   const imagemSelecionada = selecionado === ID_IMAGEM;
   const rotacaoAtual = imagemSelecionada ? (desenho.imagem?.rotacao ?? 0) : (elemento?.rotacao ?? 0);
-  const expandido = expansaoManual && expansaoManual.para === selecionado ? expansaoManual.aberto : alvoTransformavel;
+  const expandidoAutomatico = alvoTransformavel || emFerramentaApagar || selecaoArea !== null;
+  const expandido = expansaoManual && expansaoManual.para === selecionado ? expansaoManual.aberto : expandidoAutomatico;
+  const apagarIndisponivel = !imagemSrc;
 
   const linhaPrincipal = (
     <>
@@ -301,7 +344,9 @@ export function EditorDesenho() {
             key={id}
             type="button"
             aria-pressed={ferramenta === id}
-            onClick={() => setFerramenta(id)}
+            disabled={apagarIndisponivel && (id === "apagar-area" || id === "borracha")}
+            title={apagarIndisponivel && (id === "apagar-area" || id === "borracha") ? "Escolha uma imagem para poder apagar partes dela" : undefined}
+            onClick={() => escolherFerramenta(id)}
             className={`${BOTAO} ${ferramenta === id ? BOTAO_ATIVO : ""}`}
           >
             {icone}
@@ -352,13 +397,51 @@ export function EditorDesenho() {
 
   const expansao = (
     <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-[1.25rem] bg-black/20 p-2 text-[13px]">
-      {!alvoTransformavel && (
+      {!alvoTransformavel && !emFerramentaApagar && (
         <p className="px-1 text-slate-300">
           Clique em um item do desenho (ou na imagem) para movê-lo, esticá-lo ou girá-lo — ou escolha uma ferramenta para desenhar.
         </p>
       )}
 
-      {alvoTransformavel && (
+      {emFerramentaApagar && (
+        <Grupo titulo="Apagar">
+          {ferramenta === "apagar-area" ? (
+            <>
+              <span className="px-1 text-slate-300">Arraste sobre a imagem para marcar a área.</span>
+              <button type="button" aria-label="Apagar área selecionada" disabled={!selecaoArea} className={`${BOTAO} ${BOTAO_PERIGO}`} onClick={apagarArea}>
+                <Icone.Lixeira />
+                Apagar selecionada
+              </button>
+              <button type="button" className={BOTAO} disabled={!selecaoArea} onClick={() => setSelecaoArea(null)}>
+                Cancelar seleção
+              </button>
+            </>
+          ) : (
+            <>
+              <label className="flex items-center gap-1 px-1">
+                Tamanho
+                <input
+                  type="number"
+                  min={5}
+                  max={300}
+                  aria-label="Tamanho da borracha"
+                  className={`w-16 ${CAMPO}`}
+                  value={tamanhoBorracha}
+                  onChange={(e) => setTamanhoBorracha(Math.min(300, Math.max(5, Number(e.target.value) || 5)))}
+                />
+              </label>
+              <span className="px-1 text-slate-300">Arraste sobre a imagem para apagar.</span>
+            </>
+          )}
+          {quantidadeApagada > 0 && (
+            <button type="button" className={BOTAO} onClick={restaurarApagamentos}>
+              Restaurar imagem original
+            </button>
+          )}
+        </Grupo>
+      )}
+
+      {alvoTransformavel && !emFerramentaApagar && (
         <>
           <Grupo titulo="Posição">
             <button type="button" className={BOTAO} onClick={() => aplicarNoSelecionado((t) => girarPor(t, 90))}>
@@ -394,6 +477,11 @@ export function EditorDesenho() {
               <button type="button" className={BOTAO} onClick={restaurarImagem}>
                 Restaurar posição da imagem
               </button>
+              {quantidadeApagada > 0 && (
+                <button type="button" className={BOTAO} onClick={restaurarApagamentos}>
+                  Restaurar imagem original
+                </button>
+              )}
             </Grupo>
           ) : (
             <>
@@ -422,7 +510,7 @@ export function EditorDesenho() {
         </>
       )}
 
-      {elemento && (
+      {elemento && !emFerramentaApagar && (
         <>
           <label className="flex items-center gap-1 px-1">
             Cor
@@ -553,6 +641,7 @@ export function EditorDesenho() {
           <li>Escolha uma ferramenta e clique (ou arraste) no desenho; depois de desenhar, a ferramenta volta para &ldquo;Selecionar&rdquo;.</li>
           <li>Selecione um item para mover (arrastando), esticar (alças quadradas) ou girar (alça redonda; Shift encaixa de 15° em 15°).</li>
           <li>Setas do teclado movem o item (Shift = passo maior) · Delete exclui · Ctrl+D duplica · Esc deseleciona.</li>
+          <li>Apagar área: arraste para marcar e use o botão ou Delete (Esc cancela). Borracha: arraste sobre a imagem; só apaga a imagem, as anotações você exclui separadamente.</li>
           <li>Ctrl+Z desfaz · Ctrl+Shift+Z (ou Ctrl+Y) refaz · duplo clique em um texto edita o conteúdo.</li>
         </ul>
       </details>

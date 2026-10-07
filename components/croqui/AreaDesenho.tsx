@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { aplicarApagamentos, type Carimbo } from "@/lib/apagamento";
 import { ALTURA_DESENHO, LARGURA_DESENHO, type DesenhoEstado } from "@/lib/desenho";
 import { ElementoSvg } from "./ElementosDesenho";
 import { ReguaHorizontal, ReguaVertical } from "./Reguas";
@@ -13,6 +16,50 @@ type Props = {
   camadaEdicao?: ReactNode;
 };
 
+function liberar(url: string) {
+  if (url.startsWith("blob:")) URL.revokeObjectURL(url);
+}
+
+/**
+ * Imagem com as áreas apagadas (seleção de área e borracha). O original nunca é alterado: o PNG com
+ * transparência é gerado em memória e só os carimbos ficam salvos. Enquanto processa, mostra a última
+ * versão pronta (ou o original) e marca `processando` — a exportação espera essa marca sumir.
+ */
+function useImagemApagada(src: string | null, carimbos: Carimbo[] | undefined) {
+  const [pronta, setPronta] = useState<{ src: string; carimbos: Carimbo[]; url: string } | null>(null);
+  const ultimaUrl = useRef<string | null>(null);
+  const temApagamentos = Boolean(src && carimbos && carimbos.length > 0);
+
+  useEffect(() => {
+    if (!src || !carimbos || carimbos.length === 0) return;
+    let cancelado = false;
+    aplicarApagamentos(src, carimbos)
+      .then((url) => {
+        if (cancelado) return liberar(url);
+        if (ultimaUrl.current) liberar(ultimaUrl.current);
+        ultimaUrl.current = url;
+        setPronta({ src, carimbos, url });
+      })
+      .catch(() => {
+        // sem canvas/imagem indisponível: segue mostrando o original
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [src, carimbos]);
+
+  useEffect(
+    () => () => {
+      if (ultimaUrl.current) liberar(ultimaUrl.current);
+    },
+    []
+  );
+
+  if (!temApagamentos) return { src, processando: false };
+  const atualizada = pronta !== null && pronta.src === src && pronta.carimbos === carimbos;
+  return { src: pronta && pronta.src === src ? pronta.url : src, processando: !atualizada };
+}
+
 const cobrirTudo = { position: "absolute", left: 0, top: 0, width: "100%", height: "100%" } as const;
 
 /**
@@ -22,6 +69,7 @@ const cobrirTudo = { position: "absolute", left: 0, top: 0, width: "100%", heigh
  */
 export function AreaDesenho({ imagemSrc, desenho, textoLargura, textoAltura, camadaEdicao }: Props) {
   const t = desenho.imagem;
+  const { src: srcExibida, processando } = useImagemApagada(imagemSrc, desenho.apagamentos);
   return (
     <div
       data-testid="area-desenho"
@@ -30,11 +78,12 @@ export function AreaDesenho({ imagemSrc, desenho, textoLargura, textoAltura, cam
       {/* Só o conteúdo é cortado na moldura; a camada de edição fica de fora para as alças
           (de uma imagem girada, por exemplo) continuarem alcançáveis fora das bordas. */}
       <div style={{ ...cobrirTudo, overflow: "hidden" }}>
-        {imagemSrc ? (
+        {srcExibida ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
-            src={imagemSrc}
+            src={srcExibida}
             alt="Desenho do produto"
+            data-processando={processando ? "true" : undefined}
             draggable={false}
             style={{
               position: "absolute",

@@ -93,7 +93,7 @@ describe("reducerPedido — desenho editável", () => {
 
   it("trocar o tipo do produto descarta as anotações e a posição da imagem", () => {
     const resultado = reducerPedido(comDesenho, { type: "DEFINIR_TIPO", tipo: "porta-acm" });
-    expect(resultado.desenho).toEqual({ elementos: [], imagem: null });
+    expect(resultado.desenho).toEqual({ elementos: [], imagem: null, apagamentos: [] });
   });
 
   it("trocar ou remover a imagem reposiciona a imagem, mas mantém as anotações", () => {
@@ -108,8 +108,24 @@ describe("reducerPedido — desenho editável", () => {
     }
   });
 
+  it("trocar ou remover a imagem também descarta as áreas apagadas dela (e só delas)", () => {
+    const comApagamentos = {
+      ...comDesenho,
+      desenho: { ...desenho, apagamentos: [{ u: 0.5, v: 0.5, mw: 0.1, mh: 0.1, rot: 0 }] },
+    };
+    for (const acao of [
+      { type: "DEFINIR_IMAGEM_BIBLIOTECA", bibliotecaId: "x" },
+      { type: "DEFINIR_IMAGEM_UPLOAD", dataUrl: "data:image/png;base64,QUJD" },
+      { type: "REMOVER_IMAGEM" },
+    ] as const) {
+      const resultado = reducerPedido(comApagamentos, acao);
+      expect(resultado.desenho.apagamentos).toEqual([]);
+      expect(resultado.desenho.elementos).toEqual([texto]);
+    }
+  });
+
   it("o estado inicial vem sem anotações", () => {
-    expect(ESTADO_INICIAL.desenho).toEqual({ elementos: [], imagem: null });
+    expect(ESTADO_INICIAL.desenho).toEqual({ elementos: [], imagem: null, apagamentos: [] });
   });
 });
 

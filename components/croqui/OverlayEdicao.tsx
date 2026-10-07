@@ -25,9 +25,10 @@ import {
   type TipoLinha,
   type Transformacao,
 } from "@/lib/desenho";
+import { carimboQuadrado, pontosAoLongo, type AreaSelecionada, type Carimbo } from "@/lib/apagamento";
 import { transformacaoSvg } from "./ElementosDesenho";
 
-export type Ferramenta = "selecionar" | TipoLinha | "texto" | "retangulo";
+export type Ferramenta = "selecionar" | TipoLinha | "texto" | "retangulo" | "apagar-area" | "borracha";
 export const ID_IMAGEM = "imagem";
 
 type Alvo = Transformacao | ElementoDesenho;
@@ -37,7 +38,11 @@ type Gesto =
   | { tipo: "alca"; id: string; alca: Alca; original: Alvo; registrado: boolean }
   | { tipo: "extremidade"; id: string; qual: "inicio" | "fim"; original: ElementoDesenho; registrado: boolean }
   | { tipo: "rotacionar"; id: string; original: Alvo; registrado: boolean }
-  | { tipo: "criar"; variante: TipoLinha | "retangulo"; inicio: Ponto; original: ElementoDesenho };
+  | { tipo: "criar"; variante: TipoLinha | "retangulo"; inicio: Ponto; original: ElementoDesenho }
+  | { tipo: "area"; inicio: Ponto }
+  | { tipo: "borracha"; ultimo: Ponto };
+
+type GestoDeEdicao = Exclude<Gesto, { tipo: "criar" } | { tipo: "area" } | { tipo: "borracha" }>;
 
 type Props = {
   desenho: DesenhoEstado;
@@ -51,6 +56,13 @@ type Props = {
   aoCriar: (elemento: ElementoDesenho) => void;
   aoFinalizarCriacao: () => void;
   aoEditarTexto: (id: string) => void;
+  /** Lado do quadrado da borracha, em unidades do quadro. */
+  tamanhoBorracha: number;
+  /** Retângulo marcado com "Apagar área" (ainda não apagado). */
+  selecaoArea: AreaSelecionada | null;
+  aoDefinirSelecaoArea: (area: AreaSelecionada | null) => void;
+  /** Apaga da imagem (registra no histórico a cargo de quem chama, exceto traços da borracha). */
+  aoApagarCarimbos: (carimbos: Carimbo[]) => void;
 };
 
 const ALCAS_CANTO: Alca[] = ["nw", "ne", "se", "sw"];
@@ -82,10 +94,26 @@ export function OverlayEdicao({
   aoCriar,
   aoFinalizarCriacao,
   aoEditarTexto,
+  tamanhoBorracha,
+  selecaoArea,
+  aoDefinirSelecaoArea,
+  aoApagarCarimbos,
 }: Props) {
   const svgRef = useRef<SVGSVGElement>(null);
   const gestoRef = useRef<Gesto | null>(null);
   const [escala, setEscala] = useState(0.7);
+  // Borracha: prévia do traço em andamento (some logo depois que a imagem apagada fica pronta) e posição do mouse.
+  const [previa, setPrevia] = useState<Ponto[]>([]);
+  const [hover, setHover] = useState<Ponto | null>(null);
+  const centrosDoTraco = useRef<Ponto[]>([]);
+  const temporizadorPrevia = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(
+    () => () => {
+      if (temporizadorPrevia.current) clearTimeout(temporizadorPrevia.current);
+    },
+    []
+  );
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -127,7 +155,7 @@ export function OverlayEdicao({
     svgRef.current?.setPointerCapture?.(e.pointerId);
   }
 
-  function registrarUmaVez(gesto: Exclude<Gesto, { tipo: "criar" }>) {
+  function registrarUmaVez(gesto: GestoDeEdicao) {
     if (gesto.registrado) return;
     gesto.registrado = true;
     aoIniciarGesto();
@@ -174,6 +202,22 @@ export function OverlayEdicao({
       aoSelecionar(null);
       return;
     }
+    if (ferramenta === "apagar-area" || ferramenta === "borracha") {
+      // Só dá para apagar com a imagem posicionada (a posição "automática" ainda não tem medidas reais).
+      if (!desenho.imagem) return;
+      capturar(e);
+      if (ferramenta === "apagar-area") {
+        aoDefinirSelecaoArea(null);
+        gestoRef.current = { tipo: "area", inicio: p };
+        return;
+      }
+      if (temporizadorPrevia.current) clearTimeout(temporizadorPrevia.current);
+      aoIniciarGesto();
+      centrosDoTraco.current = [p];
+      setPrevia([p]);
+      gestoRef.current = { tipo: "borracha", ultimo: p };
+      return;
+    }
     if (ferramenta === "texto") {
       aoCriar(criarTexto(p));
       aoFinalizarCriacao();
@@ -189,8 +233,20 @@ export function OverlayEdicao({
 
   function aoMover(e: ReactPointerEvent) {
     const gesto = gestoRef.current;
-    if (!gesto) return;
     const p = ponto(e);
+    if (ferramenta === "borracha") setHover(p);
+    if (!gesto) return;
+
+    if (gesto.tipo === "area") {
+      aoDefinirSelecaoArea({ x1: gesto.inicio.x, y1: gesto.inicio.y, x2: p.x, y2: p.y });
+      return;
+    }
+    if (gesto.tipo === "borracha") {
+      centrosDoTraco.current.push(...pontosAoLongo(gesto.ultimo, p, tamanhoBorracha / 2));
+      gestoRef.current = { ...gesto, ultimo: p };
+      setPrevia([...centrosDoTraco.current]);
+      return;
+    }
 
     if (gesto.tipo === "criar") {
       const novo =
@@ -234,6 +290,20 @@ export function OverlayEdicao({
     const gesto = gestoRef.current;
     gestoRef.current = null;
     svgRef.current?.releasePointerCapture?.(e.pointerId);
+
+    if (gesto?.tipo === "area") {
+      const p = ponto(e);
+      const pequeno = Math.abs(p.x - gesto.inicio.x) < 6 || Math.abs(p.y - gesto.inicio.y) < 6;
+      aoDefinirSelecaoArea(pequeno ? null : { x1: gesto.inicio.x, y1: gesto.inicio.y, x2: p.x, y2: p.y });
+      return;
+    }
+    if (gesto?.tipo === "borracha") {
+      const t = desenho.imagem;
+      if (t) aoApagarCarimbos(centrosDoTraco.current.map((centro) => carimboQuadrado(t, centro, tamanhoBorracha)));
+      centrosDoTraco.current = [];
+      temporizadorPrevia.current = setTimeout(() => setPrevia([]), 450);
+      return;
+    }
     if (gesto?.tipo !== "criar") return;
 
     const atual = gesto.original;
@@ -411,6 +481,7 @@ export function OverlayEdicao({
       onPointerMove={aoMover}
       onPointerUp={aoSoltar}
       onPointerCancel={aoSoltar}
+      onPointerLeave={() => setHover(null)}
     >
       {/* Cobre toda a moldura, mesmo além do quadro 5:4 (a moldura pode ser mais alta). */}
       <rect data-fundo-edicao x={-LARGURA_DESENHO} y={-LARGURA_DESENHO} width={LARGURA_DESENHO * 3} height={LARGURA_DESENHO * 4} fill="transparent" onPointerDown={aoPressionarFundo} />
@@ -434,6 +505,46 @@ export function OverlayEdicao({
       ))}
 
       {renderSelecao()}
+
+      {selecaoArea && (
+        <rect
+          data-selecao-area
+          x={Math.min(selecaoArea.x1, selecaoArea.x2)}
+          y={Math.min(selecaoArea.y1, selecaoArea.y2)}
+          width={Math.abs(selecaoArea.x2 - selecaoArea.x1)}
+          height={Math.abs(selecaoArea.y2 - selecaoArea.y1)}
+          fill="rgba(220,38,38,0.14)"
+          stroke="#dc2626"
+          strokeWidth={traco}
+          strokeDasharray={`${6 / escala} ${4 / escala}`}
+          pointerEvents="none"
+        />
+      )}
+      {previa.map((centro, indice) => (
+        <rect
+          key={indice}
+          data-previa-borracha
+          x={centro.x - tamanhoBorracha / 2}
+          y={centro.y - tamanhoBorracha / 2}
+          width={tamanhoBorracha}
+          height={tamanhoBorracha}
+          fill="rgba(220,38,38,0.3)"
+          pointerEvents="none"
+        />
+      ))}
+      {ferramenta === "borracha" && hover && (
+        <rect
+          data-cursor-borracha
+          x={hover.x - tamanhoBorracha / 2}
+          y={hover.y - tamanhoBorracha / 2}
+          width={tamanhoBorracha}
+          height={tamanhoBorracha}
+          fill="rgba(255,255,255,0.35)"
+          stroke="#dc2626"
+          strokeWidth={traco}
+          pointerEvents="none"
+        />
+      )}
     </svg>
   );
 }

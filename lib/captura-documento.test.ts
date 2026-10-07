@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { capturarDocumentoLargo, FATOR_VIES_LARGURA } from "./captura-documento";
+import { aguardarImagensProntas, capturarDocumentoLargo, FATOR_VIES_LARGURA } from "./captura-documento";
 
 const html2canvasMock = vi.fn().mockResolvedValue({ width: 2000, height: 900 });
 vi.mock("html2canvas", () => ({
@@ -185,5 +185,33 @@ describe("capturarDocumentoLargo", () => {
     } finally {
       document.body.style.backgroundColor = "";
     }
+  });
+
+  it("espera a imagem com áreas apagadas ficar pronta antes de capturar", async () => {
+    const elemento = document.createElement("div");
+    const imagem = document.createElement("img");
+    imagem.setAttribute("data-processando", "true");
+    elemento.appendChild(imagem);
+    document.body.appendChild(elemento);
+    html2canvasMock.mockClear();
+
+    const captura = capturarDocumentoLargo(elemento);
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    expect(html2canvasMock).not.toHaveBeenCalled();
+
+    imagem.removeAttribute("data-processando");
+    await captura;
+    expect(html2canvasMock).toHaveBeenCalledOnce();
+  });
+
+  it("aguardarImagensProntas desiste depois do limite (não trava a exportação)", async () => {
+    const elemento = document.createElement("div");
+    const imagem = document.createElement("img");
+    imagem.setAttribute("data-processando", "true");
+    elemento.appendChild(imagem);
+    const inicio = Date.now();
+    await aguardarImagensProntas(elemento, 150);
+    expect(Date.now() - inicio).toBeGreaterThanOrEqual(150);
+    expect(Date.now() - inicio).toBeLessThan(1000);
   });
 });

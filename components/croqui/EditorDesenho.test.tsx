@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, type ReactNode } from "react";
 import { WizardProvider, useWizard } from "@/lib/wizard-context";
@@ -504,5 +504,192 @@ describe("EditorDesenho — barra flutuante expansível", () => {
     renderizar();
     expect(screen.getByRole("button", { name: "Mover barra de ferramentas" })).toBeInTheDocument();
     expect(screen.getByRole("toolbar").querySelectorAll("svg[aria-hidden=true]").length).toBeGreaterThan(8);
+  });
+});
+
+describe("EditorDesenho — apagar área e borracha", () => {
+  class ImagemFalsa {
+    naturalWidth = 1000;
+    naturalHeight = 500;
+    width = 1000;
+    height = 500;
+    onload: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    set src(_valor: string) {
+      setTimeout(() => this.onload?.(), 0);
+    }
+  }
+
+  function ComImagem({ children }: { children: ReactNode }) {
+    const { dispatch } = useWizard();
+    useEffect(() => {
+      dispatch({ type: "DEFINIR_TIPO", tipo: "outros" });
+      dispatch({ type: "DEFINIR_IMAGEM_UPLOAD", dataUrl: "data:image/png;base64,QUJD" });
+    }, [dispatch]);
+    return <>{children}</>;
+  }
+
+  async function renderizarComImagemPosicionada() {
+    vi.stubGlobal("Image", ImagemFalsa);
+    render(
+      <WizardProvider>
+        <ComImagem>
+          <EditorDesenho />
+          <MostrarDesenhoPersistido />
+        </ComImagem>
+      </WizardProvider>
+    );
+    // a imagem ocupa x 50..950 e y 350..800 depois de carregar (proporção 2:1)
+    await waitFor(() => expect(desenhoPersistido().imagem).not.toBeNull());
+  }
+
+  const apagamentos = () => desenhoPersistido().apagamentos ?? [];
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("as duas ferramentas ficam desabilitadas sem imagem", () => {
+    renderizar();
+    expect(screen.getByRole("button", { name: "Apagar área" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Borracha" })).toBeDisabled();
+  });
+
+  it("com imagem as ferramentas ficam disponíveis e abrem as opções de apagar", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Borracha" }));
+    expect(screen.getByRole("button", { name: "Borracha" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByLabelText("Tamanho da borracha")).toHaveValue(40);
+    expect(screen.queryByRole("button", { name: "Girar 90°" })).toBeNull();
+  });
+
+  it("Apagar área: arrastar marca a área, o botão apaga e a seleção some", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Apagar área" }));
+    fireEvent.pointerDown(fundo(), ponteiro(300, 400));
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(500, 500));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(500, 500));
+
+    expect(camadaEdicao().querySelector("[data-selecao-area]")).not.toBeNull();
+    expect(apagamentos()).toHaveLength(0); // ainda é só uma seleção
+
+    fireEvent.click(screen.getByRole("button", { name: "Apagar área selecionada" }));
+    expect(apagamentos()).toHaveLength(1);
+    // centro (400,450) → u=(400-500)/900+0,5 ; v=(450-575)/450+0,5 ; meia-largura 100/900
+    expect(apagamentos()[0]).toMatchObject({ u: 0.3889, v: 0.2222, mw: 0.1111, mh: 0.0556, rot: 0 });
+    expect(camadaEdicao().querySelector("[data-selecao-area]")).toBeNull();
+  });
+
+  it("Apagar área: Delete apaga, Esc cancela, e um arrasto minúsculo não marca nada", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Apagar área" }));
+
+    fireEvent.pointerDown(fundo(), ponteiro(300, 400));
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(302, 402));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(302, 402));
+    expect(camadaEdicao().querySelector("[data-selecao-area]")).toBeNull();
+
+    fireEvent.pointerDown(fundo(), ponteiro(300, 400));
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(400, 500));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(400, 500));
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(camadaEdicao().querySelector("[data-selecao-area]")).toBeNull();
+    expect(apagamentos()).toHaveLength(0);
+
+    fireEvent.click(screen.getByRole("button", { name: "Apagar área" }));
+    fireEvent.pointerDown(fundo(), ponteiro(300, 400));
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(400, 500));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(400, 500));
+    fireEvent.keyDown(window, { key: "Delete" });
+    expect(apagamentos()).toHaveLength(1);
+  });
+
+  it("Apagar área: dá para desfazer e refazer o apagamento", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Apagar área" }));
+    fireEvent.pointerDown(fundo(), ponteiro(300, 400));
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(500, 500));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(500, 500));
+    fireEvent.click(screen.getByRole("button", { name: "Apagar área selecionada" }));
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+    expect(apagamentos()).toHaveLength(0);
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true, shiftKey: true });
+    expect(apagamentos()).toHaveLength(1);
+  });
+
+  it("Borracha: o traço apaga quadrados ao longo do caminho e é um único passo de desfazer", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Borracha" }));
+    fireEvent.pointerDown(fundo(), ponteiro(400, 575));
+    expect(camadaEdicao().querySelectorAll("[data-previa-borracha]")).toHaveLength(1);
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(500, 575));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(500, 575));
+
+    // 1 no início + 5 ao longo de 100 unidades (passo = metade do lado = 20)
+    expect(apagamentos()).toHaveLength(6);
+    expect(apagamentos()[0]).toMatchObject({ u: 0.3889, v: 0.5, mw: 0.0222, mh: 0.0222 });
+
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+    expect(apagamentos()).toHaveLength(0);
+  });
+
+  it("Borracha: o tamanho configurado muda o quadrado e o quadradinho segue o mouse", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Borracha" }));
+    fireEvent.change(screen.getByLabelText("Tamanho da borracha"), { target: { value: "90" } });
+
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(600, 600));
+    const cursor = camadaEdicao().querySelector("[data-cursor-borracha]") as SVGRectElement;
+    expect(cursor).toHaveAttribute("width", "90");
+    expect(cursor).toHaveAttribute("x", "555");
+
+    fireEvent.pointerDown(fundo(), ponteiro(600, 600));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(600, 600));
+    expect(apagamentos()[0]).toMatchObject({ mw: 0.05, mh: 0.05 });
+  });
+
+  it("limita o tamanho da borracha entre 5 e 300", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Borracha" }));
+    fireEvent.change(screen.getByLabelText("Tamanho da borracha"), { target: { value: "9999" } });
+    expect(screen.getByLabelText("Tamanho da borracha")).toHaveValue(300);
+    fireEvent.change(screen.getByLabelText("Tamanho da borracha"), { target: { value: "1" } });
+    expect(screen.getByLabelText("Tamanho da borracha")).toHaveValue(5);
+  });
+
+  it("os apagamentos acompanham a imagem girada (carimbo com a rotação compensada)", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.pointerDown(camadaEdicao().querySelector("[data-clique=imagem]")!.firstElementChild as Element, ponteiro(500, 575));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(500, 575));
+    fireEvent.click(screen.getByRole("button", { name: "Girar 90°" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "Borracha" }));
+    fireEvent.pointerDown(fundo(), ponteiro(500, 575));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(500, 575));
+    expect(apagamentos()[0]).toMatchObject({ u: 0.5, v: 0.5, rot: -90 });
+  });
+
+  it("Restaurar imagem original limpa todos os apagamentos (e dá para desfazer)", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Borracha" }));
+    fireEvent.pointerDown(fundo(), ponteiro(400, 575));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(400, 575));
+    expect(apagamentos()).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "Restaurar imagem original" }));
+    expect(apagamentos()).toHaveLength(0);
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+    expect(apagamentos()).toHaveLength(1);
+  });
+
+  it("trocar para outra ferramenta descarta uma seleção de área pendente", async () => {
+    await renderizarComImagemPosicionada();
+    fireEvent.click(screen.getByRole("button", { name: "Apagar área" }));
+    fireEvent.pointerDown(fundo(), ponteiro(300, 400));
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(500, 500));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(500, 500));
+    fireEvent.click(screen.getByRole("button", { name: "Seta" }));
+    expect(camadaEdicao().querySelector("[data-selecao-area]")).toBeNull();
   });
 });

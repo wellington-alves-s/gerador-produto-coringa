@@ -51,6 +51,17 @@ export const Icone = {
       <rect x="4" y="5" width="16" height="14" rx="2" />
     </Svg>
   ),
+  ApagarArea: () => (
+    <Svg>
+      <rect x="4" y="5" width="16" height="14" rx="1" strokeDasharray="3 3" />
+      <path d="M9 10l6 4M15 10l-6 4" />
+    </Svg>
+  ),
+  Borracha: () => (
+    <Svg>
+      <path d="M7 21l-4.3-4.3a2 2 0 010-2.8l9.6-9.6a2 2 0 012.8 0l5.6 5.6a2 2 0 010 2.8L13 21M22 21H7M5 11l9 9" />
+    </Svg>
+  ),
   Desfazer: () => (
     <Svg>
       <path d="M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3" />

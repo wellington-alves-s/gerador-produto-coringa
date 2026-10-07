@@ -57,19 +57,19 @@ export function reducerPedido(estado: EstadoPedido, acao: AcaoPedido): EstadoPed
       return {
         ...estado,
         imagem: { origem: "biblioteca", bibliotecaId: acao.bibliotecaId, uploadDataUrl: null },
-        desenho: { ...estado.desenho, imagem: null },
+        desenho: { ...estado.desenho, imagem: null, apagamentos: [] },
       };
     case "DEFINIR_IMAGEM_UPLOAD":
       return {
         ...estado,
         imagem: { origem: "upload", bibliotecaId: null, uploadDataUrl: acao.dataUrl },
-        desenho: { ...estado.desenho, imagem: null },
+        desenho: { ...estado.desenho, imagem: null, apagamentos: [] },
       };
     case "REMOVER_IMAGEM":
       return {
         ...estado,
         imagem: { origem: null, bibliotecaId: null, uploadDataUrl: null },
-        desenho: { ...estado.desenho, imagem: null },
+        desenho: { ...estado.desenho, imagem: null, apagamentos: [] },
       };
     case "ATUALIZAR_COMPRA":
       return { ...estado, compra: { ...estado.compra, [acao.campo]: acao.valor } };

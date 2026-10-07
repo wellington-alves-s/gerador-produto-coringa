@@ -32,6 +32,7 @@ Não existe tela de upload/admin nesta versão — a biblioteca de imagens é al
 Na etapa de Revisão há uma barra de ferramentas flutuante para anotar o croqui antes de gerá-lo. Ela nasce no canto superior direito do croqui, fica compacta numa linha, **expande sozinha** quando um item é selecionado (o botão "•••" abre/fecha à mão) e pode ser **movida** para qualquer lugar da janela arrastando a alça à esquerda (ou com as setas do teclado quando a alça está focada):
 
 - **Desenhar:** Linha, Seta, Seta dupla, Texto e Retângulo (clique ou arraste no desenho).
+- **Apagar partes da imagem:** **Apagar área** (arraste um retângulo sobre a imagem e confirme com o botão ou Delete; Esc cancela) e **Borracha** quadrada como a do Paint (arraste sobre a imagem; o tamanho é ajustável). Só a imagem do produto é apagada — as anotações você exclui separadamente. Tudo é desfazível (Ctrl+Z) e dá para **Restaurar imagem original**; a imagem de origem nunca é alterada.
 - **Selecionar** um item (ou a própria imagem) para **mover** (arrastando ou com as setas do teclado), **esticar/encolher** (alças quadradas), **girar** (alça redonda, campo de rotação ou "Girar 90°"; Shift encaixa de 15° em 15°) e **espelhar** na horizontal ou na vertical.
 - **Camadas:** Para frente, Para trás, Ao topo e Ao fundo. **Duplicar**, **Excluir**, cor, espessura, setas, preenchimento e texto na área de opções.
 - Atalhos: setas movem (Shift = passo maior) · Delete exclui · Ctrl+D duplica · Ctrl+Z desfaz · Ctrl+Shift+Z (ou Ctrl+Y) refaz · Esc deseleciona.

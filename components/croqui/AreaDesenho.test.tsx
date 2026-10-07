@@ -1,6 +1,16 @@
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
 import { AreaDesenho } from "./AreaDesenho";
+
+const aplicarApagamentosMock = vi.fn();
+vi.mock("@/lib/apagamento", async (importarOriginal) => ({
+  ...(await importarOriginal<typeof import("@/lib/apagamento")>()),
+  aplicarApagamentos: (...args: unknown[]) => aplicarApagamentosMock(...args),
+}));
+
+beforeEach(() => {
+  aplicarApagamentosMock.mockReset().mockResolvedValue("data:image/png;base64,APAGADA");
+});
 import { criarLinha, criarRetangulo, criarTexto, transformacaoPadraoDaImagem, DESENHO_INICIAL } from "@/lib/desenho";
 
 describe("AreaDesenho", () => {
@@ -80,5 +90,56 @@ describe("AreaDesenho", () => {
     const grupos = screen.getByTestId("camada-elementos").querySelectorAll("g[data-elemento]");
     expect(grupos[0].querySelectorAll("polygon")).toHaveLength(1);
     expect(grupos[1].querySelectorAll("polygon")).toHaveLength(0);
+  });
+
+  describe("áreas apagadas da imagem", () => {
+    const carimbos = [{ u: 0.5, v: 0.5, mw: 0.1, mh: 0.1, rot: 0 }];
+
+    it("sem apagamentos, mostra a imagem original e não processa nada", () => {
+      render(<AreaDesenho imagemSrc="/x.jpg" desenho={{ elementos: [], imagem: null, apagamentos: [] }} />);
+      expect(screen.getByAltText("Desenho do produto")).toHaveAttribute("src", "/x.jpg");
+      expect(screen.getByAltText("Desenho do produto")).not.toHaveAttribute("data-processando");
+      expect(aplicarApagamentosMock).not.toHaveBeenCalled();
+    });
+
+    it("com apagamentos, troca pela imagem processada; enquanto isso fica marcada como processando", async () => {
+      let concluir: (url: string) => void = () => {};
+      aplicarApagamentosMock.mockReturnValue(new Promise<string>((resolve) => (concluir = resolve)));
+      render(<AreaDesenho imagemSrc="/x.jpg" desenho={{ elementos: [], imagem: null, apagamentos: carimbos }} />);
+
+      const imagem = screen.getByAltText("Desenho do produto");
+      expect(imagem).toHaveAttribute("src", "/x.jpg");
+      expect(imagem).toHaveAttribute("data-processando", "true");
+      expect(aplicarApagamentosMock).toHaveBeenCalledWith("/x.jpg", carimbos);
+
+      concluir("data:image/png;base64,APAGADA");
+      await waitFor(() => expect(screen.getByAltText("Desenho do produto")).toHaveAttribute("src", "data:image/png;base64,APAGADA"));
+      expect(screen.getByAltText("Desenho do produto")).not.toHaveAttribute("data-processando");
+    });
+
+    it("se o processamento falhar, segue mostrando a imagem original", async () => {
+      aplicarApagamentosMock.mockRejectedValue(new Error("sem canvas"));
+      render(<AreaDesenho imagemSrc="/x.jpg" desenho={{ elementos: [], imagem: null, apagamentos: carimbos }} />);
+      await waitFor(() => expect(aplicarApagamentosMock).toHaveBeenCalled());
+      expect(screen.getByAltText("Desenho do produto")).toHaveAttribute("src", "/x.jpg");
+    });
+
+    it("novos apagamentos reprocessam a imagem a partir da original", async () => {
+      const { rerender } = render(<AreaDesenho imagemSrc="/x.jpg" desenho={{ elementos: [], imagem: null, apagamentos: carimbos }} />);
+      await waitFor(() => expect(screen.getByAltText("Desenho do produto")).toHaveAttribute("src", "data:image/png;base64,APAGADA"));
+
+      const mais = [...carimbos, { u: 0.2, v: 0.2, mw: 0.05, mh: 0.05, rot: 0 }];
+      aplicarApagamentosMock.mockResolvedValue("data:image/png;base64,MAIS");
+      rerender(<AreaDesenho imagemSrc="/x.jpg" desenho={{ elementos: [], imagem: null, apagamentos: mais }} />);
+      await waitFor(() => expect(screen.getByAltText("Desenho do produto")).toHaveAttribute("src", "data:image/png;base64,MAIS"));
+      expect(aplicarApagamentosMock).toHaveBeenLastCalledWith("/x.jpg", mais);
+    });
+
+    it("ao restaurar (sem apagamentos), volta para a imagem original", async () => {
+      const { rerender } = render(<AreaDesenho imagemSrc="/x.jpg" desenho={{ elementos: [], imagem: null, apagamentos: carimbos }} />);
+      await waitFor(() => expect(screen.getByAltText("Desenho do produto")).toHaveAttribute("src", "data:image/png;base64,APAGADA"));
+      rerender(<AreaDesenho imagemSrc="/x.jpg" desenho={{ elementos: [], imagem: null, apagamentos: [] }} />);
+      expect(screen.getByAltText("Desenho do produto")).toHaveAttribute("src", "/x.jpg");
+    });
   });
 });
