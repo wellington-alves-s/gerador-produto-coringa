@@ -234,7 +234,7 @@ function descreverPorta(estado: EstadoPedido): DescricaoImagem {
 
 type PecaDegrau = "degrau" | "patamar" | "rodape";
 
-/** O tipo do produto agrupa as três peças; quem decide é a descrição digitada pelo vendedor. */
+/** Usado só como fallback (rascunhos antigos, sem o campo "Peça"): deduz a peça pela descrição digitada. */
 export function detectarPecaDegrau(descricao: string): PecaDegrau {
   const normalizada = descricao
     .normalize("NFD")
@@ -274,8 +274,15 @@ const PRESETS_DEGRAU: Record<
   },
 };
 
+const PECA_POR_OPCAO: Record<string, PecaDegrau> = { DEGRAU: "degrau", PATAMAR: "patamar", "RODAPÉ": "rodape" };
+
+export function pecaDoPedido(estado: EstadoPedido): PecaDegrau {
+  const escolhida = texto(estado, "tipoPeca");
+  return (escolhida && PECA_POR_OPCAO[escolhida]) || detectarPecaDegrau(estado.pedido.descricao);
+}
+
 function descreverDegrau(estado: EstadoPedido): DescricaoImagem {
-  const peca = detectarPecaDegrau(estado.pedido.descricao);
+  const peca = pecaDoPedido(estado);
   const preset = PRESETS_DEGRAU[peca];
   const madeira = texto(estado, "tipoMadeira");
   const formaGeral = proporcao(metros(estado, "comprimento"), metros(estado, "largura"));

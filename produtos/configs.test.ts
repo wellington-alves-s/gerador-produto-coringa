@@ -275,10 +275,16 @@ describe("configs de produto — conteúdo específico", () => {
     expect(campo && "opcoes" in campo ? campo.opcoes : []).toEqual(["ESQUERDA", "DIREITA", "CENTRAL", "BANDA LOUCA"]);
   });
 
-  it("degrau-patamar-rodape: só tem os 4 campos combinados, todos obrigatórios", () => {
+  it("degrau-patamar-rodape: tem os 5 campos (Peça + 4 combinados), todos obrigatórios", () => {
     const campos = PRODUTOS["degrau-patamar-rodape"].campos;
-    expect(campos).toHaveLength(4);
+    expect(campos).toHaveLength(5);
     expect(campos.every((c) => c.obrigatorio)).toBe(true);
+  });
+
+  it("degrau-patamar-rodape: Peça é opção única Degrau/Patamar/Rodapé", () => {
+    const campo = PRODUTOS["degrau-patamar-rodape"].campos.find((c) => c.id === "tipoPeca");
+    expect(campo?.tipo).toBe("opcao-unica");
+    expect(campo && "opcoes" in campo ? campo.opcoes : []).toEqual(["DEGRAU", "PATAMAR", "RODAPÉ"]);
   });
 
   it("degrau-patamar-rodape: espessura é em cm com 1 casa decimal e 1 casa inteira", () => {

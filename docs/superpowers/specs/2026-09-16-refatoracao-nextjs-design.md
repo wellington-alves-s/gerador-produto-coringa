@@ -208,6 +208,7 @@ Essa lista de campos alimenta três coisas ao mesmo tempo: o formulário da Etap
 
 | id | tipo | opções / unidade | obrigatório |
 |---|---|---|---|
+| tipoPeca | opcao-unica | DEGRAU, PATAMAR, RODAPÉ | sim |
 | largura | medida | m | sim |
 | comprimento | medida | m | sim |
 | espessura | medida | m | sim |

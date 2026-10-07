@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   detectarPecaDegrau,
+  pecaDoPedido,
   limparDescricao,
   montarDescricaoImagem,
   montarPromptImagem,
@@ -116,7 +117,7 @@ describe("degrau / patamar / rodapé", () => {
   });
 
   it("usa a estrutura descricao_da_imagem das referências, com fundo recortado branco", () => {
-    const d = montarDescricaoImagem(estadoDe("degrau-patamar-rodape", { tipoMadeira: "Cedro" }, "Rodapé")) as {
+    const d = montarDescricaoImagem(estadoDe("degrau-patamar-rodape", { tipoPeca: "RODAPÉ", tipoMadeira: "Cedro" })) as {
       descricao_da_imagem: { assunto_principal: string; detalhes_do_objeto: Record<string, string>; fundo: unknown };
     };
     expect(d.descricao_da_imagem.assunto_principal).toBe("Rodapé de madeira");
@@ -125,8 +126,26 @@ describe("degrau / patamar / rodapé", () => {
     expect(d.descricao_da_imagem.fundo).toEqual({ tipo: "Recortado", cor: "Branco" });
   });
 
+  it("o campo Peça manda mesmo que a descrição cite outra peça", () => {
+    expect(pecaDoPedido(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU" }, "Rodapé de 15cm"))).toBe("degrau");
+    expect(pecaDoPedido(estadoDe("degrau-patamar-rodape", { tipoPeca: "RODAPÉ" }))).toBe("rodape");
+    expect(pecaDoPedido(estadoDe("degrau-patamar-rodape", { tipoPeca: "PATAMAR" }))).toBe("patamar");
+  });
+
+  it("sem o campo Peça (rascunho antigo), cai para a detecção pela descrição", () => {
+    expect(pecaDoPedido(estadoDe("degrau-patamar-rodape", {}, "Rodapé"))).toBe("rodape");
+  });
+
+  it("degrau usa a face frontal e o corte lateral", () => {
+    const d = montarDescricaoImagem(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU" })) as {
+      descricao_da_imagem: { assunto_principal: string; detalhes_do_objeto: Record<string, string> };
+    };
+    expect(d.descricao_da_imagem.assunto_principal).toBe("Degrau de madeira");
+    expect(d.descricao_da_imagem.detalhes_do_objeto.posicionamento).toMatch(/face frontal ampla/);
+  });
+
   it("patamar usa vista superior", () => {
-    const d = montarDescricaoImagem(estadoDe("degrau-patamar-rodape", {}, "Patamar")) as {
+    const d = montarDescricaoImagem(estadoDe("degrau-patamar-rodape", { tipoPeca: "PATAMAR" })) as {
       descricao_da_imagem: { detalhes_do_objeto: Record<string, string> };
     };
     expect(d.descricao_da_imagem.detalhes_do_objeto.posicionamento).toMatch(/Vista superior/);

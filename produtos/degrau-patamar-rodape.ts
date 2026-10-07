@@ -14,6 +14,13 @@ export const degrauPatamarRodape: ConfigProduto = {
   rotuloCampoLargura: "Comprimento",
   rotuloCampoAltura: "Largura",
   campos: [
+    {
+      id: "tipoPeca",
+      tipo: "opcao-unica",
+      label: "Peça",
+      opcoes: ["DEGRAU", "PATAMAR", "RODAPÉ"],
+      obrigatorio: true,
+    },
     { id: "largura", tipo: "medida", unidade: "m", label: "Largura", obrigatorio: true },
     { id: "comprimento", tipo: "medida", unidade: "m", label: "Comprimento", obrigatorio: true },
     { id: "espessura", tipo: "medida", unidade: "cm", casasDecimais: 1, label: "Espessura", obrigatorio: true },
