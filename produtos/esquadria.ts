@@ -4,6 +4,7 @@ export const esquadria: ConfigProduto = {
   id: "esquadria",
   nome: "Esquadrias Encomenda",
   tituloDocumento: "ENCOMENDA ESPECIAL ESQUADRIAS",
+  permiteGerarImagem: true,
   prazoEntregaDias: 60,
   campoLargura: "largura",
   campoAltura: "altura",

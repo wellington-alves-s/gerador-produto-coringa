@@ -4,6 +4,7 @@ export const portaEspecial: ConfigProduto = {
   id: "porta-especial",
   nome: "Porta Encomenda Especial",
   tituloDocumento: "ENCOMENDA ESPECIAL PORTAS",
+  permiteGerarImagem: true,
   prazoEntregaDias: 60,
   campoLargura: "larguraFolha",
   campoAltura: "alturaFolha",

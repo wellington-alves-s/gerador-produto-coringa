@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useEffect, type ReactNode } from "react";
 import { WizardProvider, useWizard } from "@/lib/wizard-context";
+import type { TipoProdutoId } from "@/produtos/tipos";
 import EtapaImagem from "./page";
 
 const push = vi.fn();
@@ -16,11 +17,17 @@ vi.mock("@/lib/biblioteca-dados", () => ({
   ],
 }));
 
-function ComTipo({ children }: { children: ReactNode }) {
+const solicitarImagemGeradaMock = vi.fn();
+vi.mock("@/lib/gerar-imagem-cliente", async (importarOriginal) => ({
+  ...(await importarOriginal<typeof import("@/lib/gerar-imagem-cliente")>()),
+  solicitarImagemGerada: (...args: unknown[]) => solicitarImagemGeradaMock(...args),
+}));
+
+function ComTipo({ children, tipo = "outros" }: { children: ReactNode; tipo?: TipoProdutoId }) {
   const { dispatch } = useWizard();
   useEffect(() => {
-    dispatch({ type: "DEFINIR_TIPO", tipo: "outros" });
-  }, [dispatch]);
+    dispatch({ type: "DEFINIR_TIPO", tipo });
+  }, [dispatch, tipo]);
   return <>{children}</>;
 }
 
@@ -28,6 +35,7 @@ beforeEach(() => {
   window.localStorage.clear();
   push.mockClear();
   replace.mockClear();
+  solicitarImagemGeradaMock.mockReset();
 });
 
 describe("Etapa Imagem", () => {
@@ -112,5 +120,55 @@ describe("Etapa Imagem", () => {
       </WizardProvider>
     );
     expect(replace).toHaveBeenCalledWith("/criar/tipo");
+  });
+
+  it("não mostra o botão Gerar imagem para o tipo Outros", () => {
+    render(
+      <WizardProvider>
+        <ComTipo tipo="outros">
+          <EtapaImagem />
+        </ComTipo>
+      </WizardProvider>
+    );
+    expect(screen.queryByRole("button", { name: "Gerar imagem" })).toBeNull();
+  });
+
+  it("Gerar imagem abre o modal com o resultado e permite descartar", async () => {
+    solicitarImagemGeradaMock.mockResolvedValue("data:image/png;base64,QUJD");
+    const user = userEvent.setup();
+    render(
+      <WizardProvider>
+        <ComTipo tipo="esquadria">
+          <EtapaImagem />
+        </ComTipo>
+      </WizardProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Gerar imagem" }));
+
+    expect(await screen.findByAltText("Imagem gerada por IA")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Usar esta imagem" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Descartar" }));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("mostra a mensagem de erro no modal e permite tentar de novo", async () => {
+    solicitarImagemGeradaMock.mockRejectedValueOnce(new Error("Geração de imagem não configurada neste ambiente."));
+    solicitarImagemGeradaMock.mockResolvedValueOnce("data:image/png;base64,QUJD");
+    const user = userEvent.setup();
+    render(
+      <WizardProvider>
+        <ComTipo tipo="porta-acm">
+          <EtapaImagem />
+        </ComTipo>
+      </WizardProvider>
+    );
+
+    await user.click(screen.getByRole("button", { name: "Gerar imagem" }));
+    expect(await screen.findByText(/não configurada/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
+    expect(await screen.findByAltText("Imagem gerada por IA")).toBeInTheDocument();
   });
 });

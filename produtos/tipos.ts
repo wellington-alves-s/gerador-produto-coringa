@@ -60,4 +60,6 @@ export type ConfigProduto = {
   rotuloCampoLargura?: string;
   /** Palavra mostrada na régua vertical (padrão "Altura"). Útil quando a orientação física da peça não é altura, ex.: "Largura". */
   rotuloCampoAltura?: string;
+  /** Habilita o botão "Gerar imagem" (IA) na etapa de imagem para este tipo. */
+  permiteGerarImagem?: boolean;
 };

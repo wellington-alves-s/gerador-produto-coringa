@@ -27,6 +27,14 @@ Não existe tela de upload/admin nesta versão — a biblioteca de imagens é al
 2. Adicione uma entrada correspondente em `lib/biblioteca-dados.ts`.
 3. Faça commit e push.
 
+## Geração de imagem por IA (opcional)
+
+Nas etapas de imagem de esquadrias, portas e degrau/patamar/rodapé existe o botão **Gerar imagem**. O prompt é montado em `lib/prompt-imagem.ts` a partir das especificações marcadas e da descrição do pedido (um JSON estruturado), e a geração acontece na rota `app/api/gerar-imagem/route.ts`, que guarda a chave no servidor.
+
+Para ativar: copie `.env.example` para `.env.local`, preencha `GEMINI_API_KEY` (na Vercel, em *Environment Variables*) e, se quiser, `GEMINI_IMAGE_MODEL`. Sem a chave o botão responde "não configurada".
+
+O acesso à rota está livre; o ponto para adicionar limite por IP ou senha é `lib/servidor/protecao.ts`.
+
 ## Mais detalhes
 
 O desenho completo da arquitetura e as decisões de escopo estão em

@@ -4,6 +4,7 @@ export const portaMarcenaria: ConfigProduto = {
   id: "porta-marcenaria",
   nome: "Porta Marcenaria Madel",
   tituloDocumento: "ENCOMENDA ESPECIAL PORTAS",
+  permiteGerarImagem: true,
   prazoEntregaDias: 60,
   campoLargura: "larguraFolha",
   campoAltura: "alturaFolha",

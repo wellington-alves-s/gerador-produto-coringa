@@ -8,12 +8,16 @@ import { PRODUTOS } from "@/produtos";
 import { BIBLIOTECA } from "@/lib/biblioteca-dados";
 import { buscarImagens, caminhoImagem } from "@/lib/biblioteca";
 import { comprimirImagem } from "@/lib/imagem";
+import { podeGerarImagem } from "@/lib/prompt-imagem";
+import { dataUrlParaArquivo, obterReferenciaDataUrl, solicitarImagemGerada } from "@/lib/gerar-imagem-cliente";
+import { ModalImagemGerada, type EstadoGeracao } from "@/components/ui/ModalImagemGerada";
 
 export default function EtapaImagem() {
   const { estado, dispatch } = useWizard();
   const router = useRouter();
   const [termoBusca, setTermoBusca] = useState("");
   const [erroUpload, setErroUpload] = useState<string | null>(null);
+  const [geracao, setGeracao] = useState<EstadoGeracao | null>(null);
   const inputArquivoRef = useRef<HTMLInputElement>(null);
   const galeriaRef = useRef<HTMLDivElement>(null);
 
@@ -41,6 +45,27 @@ export default function EtapaImagem() {
       dispatch({ type: "DEFINIR_IMAGEM_UPLOAD", dataUrl });
     } catch {
       setErroUpload("Não foi possível processar essa imagem. Tente outro arquivo.");
+    }
+  }
+
+  async function gerarImagem() {
+    setGeracao({ status: "gerando" });
+    try {
+      const referencia = await obterReferenciaDataUrl(estado);
+      const imagem = await solicitarImagemGerada(estado, referencia);
+      setGeracao({ status: "pronto", imagem });
+    } catch (erro) {
+      setGeracao({ status: "erro", mensagem: erro instanceof Error ? erro.message : "Não foi possível gerar a imagem." });
+    }
+  }
+
+  async function usarImagemGerada(imagem: string) {
+    try {
+      const dataUrl = await comprimirImagem(await dataUrlParaArquivo(imagem));
+      dispatch({ type: "DEFINIR_IMAGEM_UPLOAD", dataUrl });
+      setGeracao(null);
+    } catch {
+      setGeracao({ status: "erro", mensagem: "Não foi possível aplicar a imagem gerada. Tente gerar de novo." });
     }
   }
 
@@ -96,6 +121,16 @@ export default function EtapaImagem() {
           Escolher imagem…
         </button>
         {erroUpload && <p className="mt-1 text-sm text-red-700">{erroUpload}</p>}
+        {podeGerarImagem(estado.tipo) && (
+          <button
+            type="button"
+            onClick={gerarImagem}
+            disabled={geracao?.status === "gerando"}
+            className="ml-3 rounded-md border border-red-700 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-40 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-950/40"
+          >
+            Gerar imagem
+          </button>
+        )}
       </div>
 
       <div>
@@ -186,6 +221,15 @@ export default function EtapaImagem() {
           Próximo →
         </button>
       </div>
+
+      {geracao && (
+        <ModalImagemGerada
+          geracao={geracao}
+          aoUsar={usarImagemGerada}
+          aoGerarNovamente={gerarImagem}
+          aoFechar={() => setGeracao(null)}
+        />
+      )}
     </div>
   );
 }

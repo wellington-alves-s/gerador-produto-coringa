@@ -4,6 +4,7 @@ export const degrauPatamarRodape: ConfigProduto = {
   id: "degrau-patamar-rodape",
   nome: "Degrau / Patamar / Rodapé",
   tituloDocumento: "ENCOMENDA ESPECIAL DEGRAU/PATAMAR/RODAPÉ",
+  permiteGerarImagem: true,
   prazoEntregaDias: 60,
   // A régua horizontal (embaixo do desenho) mostra o comprimento da peça, e a
   // vertical (do lado) mostra a largura — orientação física invertida em

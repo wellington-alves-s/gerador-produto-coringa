@@ -4,6 +4,7 @@ export const portaAcm: ConfigProduto = {
   id: "porta-acm",
   nome: "Porta de ACM",
   tituloDocumento: "ENCOMENDA ESPECIAL PORTAS ACM",
+  permiteGerarImagem: true,
   prazoEntregaDias: 90,
   campoLargura: "larguraFolha",
   campoAltura: "alturaFolha",

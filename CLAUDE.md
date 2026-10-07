@@ -20,7 +20,7 @@ Produto Coringa — gerador de encomendas especiais (croqui) da Madel, reescrito
 - **Wizard** (`app/criar/*`): 5 rotas (`tipo`, `pedido`, `especificacoes`, `imagem`, `revisao`) + `resultado`. Estado central em `lib/wizard-context.tsx` (Context + reducer), tipado em `lib/pedido.ts`, espelhado em `localStorage` por `lib/wizard-storage.ts` a cada mudança — permite recuperar um rascunho não finalizado.
 - **Biblioteca de imagens**: `lib/biblioteca-dados.ts` (manifesto) + `public/biblioteca/produtos/` (arquivos). Alimentada só via edição de código + deploy — não existe tela de upload/admin nesta v1.
 - **Documento final**: `components/croqui/DocumentoCroqui.tsx` reproduz o layout dos formulários físicos da Madel; é usado tanto no preview da Revisão quanto na tela de Resultado. Exportação em `lib/exportar-pdf.ts` / `lib/exportar-imagem.ts` (html2canvas + jsPDF), disparada por dois botões independentes.
-- **Sem backend**: nenhuma rota de API, banco de dados, login ou persistência de pedidos nesta v1 — só o rascunho único em `localStorage`. Ver `docs/superpowers/specs/2026-09-16-refatoracao-nextjs-design.md` para o desenho completo e o que fica para fases futuras.
+- **Backend mínimo**: a única rota de servidor é `app/api/gerar-imagem/route.ts` (geração de imagem por IA, chave `GEMINI_API_KEY`; ver README). O prompt é montado em `lib/prompt-imagem.ts` e o provedor fica em `lib/servidor/gemini.ts`; a proteção por IP/senha (hoje livre) entra em `lib/servidor/protecao.ts`. Fora isso, não há banco de dados, login nem persistência de pedidos — só o rascunho único em `localStorage`. Ver `docs/superpowers/specs/2026-09-16-refatoracao-nextjs-design.md` para o desenho completo e o que fica para fases futuras.
 
 ## Convenções
 
