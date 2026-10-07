@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useWizard } from "@/lib/wizard-context";
 import { StepIndicator } from "@/components/wizard/StepIndicator";
-import { DocumentoCroqui } from "@/components/croqui/DocumentoCroqui";
+import { EditorDesenho } from "@/components/croqui/EditorDesenho";
 
 export default function EtapaRevisao() {
   const { estado, dispatch } = useWizard();
@@ -35,11 +35,7 @@ export default function EtapaRevisao() {
       <StepIndicator etapaAtual="revisao" />
       <h1 className="mb-6 text-2xl font-semibold">Revisar encomenda</h1>
 
-      <div className="relative mr-[calc(50%-50vw)] ml-[calc(50%-50vw)] mb-6 w-screen overflow-x-auto px-4">
-        <div className="mx-auto max-w-[1600px]">
-          <DocumentoCroqui estado={estado} />
-        </div>
-      </div>
+      <EditorDesenho />
 
       <label className="mb-6 block">
         <span className="mb-1 block text-sm font-medium">Informação adicional (opcional)</span>

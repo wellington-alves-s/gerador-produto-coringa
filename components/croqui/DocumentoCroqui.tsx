@@ -1,11 +1,14 @@
+import type { ReactNode } from "react";
 import type { Campo, CampoMultiplaEscolha, CampoOpcaoUnica, ConfigProduto } from "@/produtos/tipos";
 import { PRODUTOS } from "@/produtos";
 import type { EstadoPedido } from "@/lib/pedido";
 import { formatarMedidaParaExibicao } from "@/lib/formatacao";
 import { caminhoImagem } from "@/lib/biblioteca";
 import { BIBLIOTECA } from "@/lib/biblioteca-dados";
+import { DESENHO_INICIAL } from "@/lib/desenho";
+import { AreaDesenho } from "./AreaDesenho";
 
-type Props = { estado: EstadoPedido };
+type Props = { estado: EstadoPedido; camadaEdicao?: ReactNode };
 
 function valorExibivelCampo(campo: Campo, valorBruto: string | undefined): string {
   if (!valorBruto) return "—";
@@ -191,7 +194,7 @@ function textoRegua(
   return `${valorExibivelCampo(campo, valor)} ${rotulo}`;
 }
 
-export function DocumentoCroqui({ estado }: Props) {
+export function DocumentoCroqui({ estado, camadaEdicao }: Props) {
   if (!estado.tipo) return null;
   const config = PRODUTOS[estado.tipo];
 
@@ -309,7 +312,7 @@ export function DocumentoCroqui({ estado }: Props) {
               dela quando havia mais altura disponível que o teto permitia. */}
           <div className="flex min-h-[220px] flex-1">
             <div
-              className="flex flex-1 flex-col overflow-hidden border border-[#9ca3af] p-4"
+              className="flex flex-1 flex-col border border-[#9ca3af] p-4"
               style={imagemSrc ? undefined : ESTILO_GRADE_DESENHO}
             >
               {/* Régua da largura em fluxo normal (não position:absolute) — o
@@ -323,23 +326,12 @@ export function DocumentoCroqui({ estado }: Props) {
                 </div>
               )}
               <div className="flex flex-1 items-center">
-                <div className="flex flex-1 items-center justify-center">
-                  {imagemSrc ? (
-                    // max-h em px fixo (não max-h-full): com a régua da largura
-                    // como uma linha a mais no fluxo normal, a altura do wrapper
-                    // que envolve a imagem passou a depender de várias camadas
-                    // de flex encadeadas sem nenhuma altura fixa — o cálculo de
-                    // porcentagem se perdia (só na exportação) e a imagem
-                    // renderizava no tamanho nativo da foto, sem limite.
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={imagemSrc}
-                      alt="Desenho do produto"
-                      className="max-h-[560px] max-w-full object-contain"
-                    />
-                  ) : (
-                    <span className="text-xs text-[#9ca3af]">Sem imagem</span>
-                  )}
+                <div className="min-w-0 flex-1">
+                  <AreaDesenho
+                    imagemSrc={imagemSrc}
+                    desenho={estado.desenho ?? DESENHO_INICIAL}
+                    camadaEdicao={camadaEdicao}
+                  />
                 </div>
                 {/* Régua da altura também em fluxo normal, do lado da imagem —
                     mesmo motivo da régua da largura: position:absolute com

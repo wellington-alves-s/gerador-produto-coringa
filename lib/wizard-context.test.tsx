@@ -3,6 +3,7 @@ import { render } from "@testing-library/react";
 import { useEffect } from "react";
 import { reducerPedido, WizardProvider, useWizard } from "./wizard-context";
 import { ESTADO_INICIAL } from "./pedido";
+import { criarTexto, transformacaoPadraoDaImagem, type DesenhoEstado } from "./desenho";
 import { salvarRascunho, carregarRascunho } from "./wizard-storage";
 
 describe("reducerPedido", () => {
@@ -77,6 +78,38 @@ describe("reducerPedido", () => {
       valor: "SEM FOLEAR",
     });
     expect(trocaCava.especificacoes.cavaLados).toBe("1 LADO");
+  });
+});
+
+describe("reducerPedido — desenho editável", () => {
+  const texto = criarTexto({ x: 100, y: 100 }, "Medida");
+  const desenho: DesenhoEstado = { elementos: [texto], imagem: transformacaoPadraoDaImagem(1.5) };
+  const comDesenho = { ...ESTADO_INICIAL, tipo: "esquadria" as const, desenho };
+
+  it("DEFINIR_DESENHO substitui o desenho inteiro", () => {
+    const resultado = reducerPedido(ESTADO_INICIAL, { type: "DEFINIR_DESENHO", desenho });
+    expect(resultado.desenho).toBe(desenho);
+  });
+
+  it("trocar o tipo do produto descarta as anotações e a posição da imagem", () => {
+    const resultado = reducerPedido(comDesenho, { type: "DEFINIR_TIPO", tipo: "porta-acm" });
+    expect(resultado.desenho).toEqual({ elementos: [], imagem: null });
+  });
+
+  it("trocar ou remover a imagem reposiciona a imagem, mas mantém as anotações", () => {
+    for (const acao of [
+      { type: "DEFINIR_IMAGEM_BIBLIOTECA", bibliotecaId: "x" },
+      { type: "DEFINIR_IMAGEM_UPLOAD", dataUrl: "data:image/png;base64,QUJD" },
+      { type: "REMOVER_IMAGEM" },
+    ] as const) {
+      const resultado = reducerPedido(comDesenho, acao);
+      expect(resultado.desenho.imagem).toBeNull();
+      expect(resultado.desenho.elementos).toEqual([texto]);
+    }
+  });
+
+  it("o estado inicial vem sem anotações", () => {
+    expect(ESTADO_INICIAL.desenho).toEqual({ elementos: [], imagem: null });
   });
 });
 

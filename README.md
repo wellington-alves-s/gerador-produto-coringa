@@ -27,6 +27,17 @@ Não existe tela de upload/admin nesta versão — a biblioteca de imagens é al
 2. Adicione uma entrada correspondente em `lib/biblioteca-dados.ts`.
 3. Faça commit e push.
 
+## Editando o desenho na Revisão
+
+Na etapa de Revisão, sobre o quadro "Desenho da peça especial", há uma barra de ferramentas para anotar o croqui antes de gerá-lo:
+
+- **Desenhar:** Linha, Seta, Seta dupla, Texto e Retângulo (clique ou arraste no desenho).
+- **Selecionar** um item (ou a própria imagem) para **mover** (arrastando ou com as setas do teclado), **esticar/encolher** (alças quadradas), **girar** (alça redonda, campo de rotação ou "Girar 90°"; Shift encaixa de 15° em 15°) e **espelhar** na horizontal ou na vertical.
+- **Camadas:** Para frente, Para trás, Ao topo e Ao fundo. **Duplicar**, **Excluir**, cor, espessura, setas, preenchimento e texto na área de opções.
+- Atalhos: setas movem (Shift = passo maior) · Delete exclui · Ctrl+D duplica · Ctrl+Z desfaz · Ctrl+Shift+Z (ou Ctrl+Y) refaz · Esc deseleciona.
+
+Ao clicar em **Gerar Croqui**, o resultado já sai consolidado na tela final, pronto para baixar em PDF ou imagem. As anotações ficam salvas no rascunho.
+
 ## Geração de imagem por IA (opcional)
 
 Nas etapas de imagem de esquadrias, portas e degrau/patamar/rodapé existe o botão **Gerar imagem**. O prompt é montado em `lib/prompt-imagem.ts` a partir das especificações marcadas e da descrição do pedido (um JSON estruturado), e a geração acontece na rota `app/api/gerar-imagem/route.ts`, que guarda a chave no servidor.

@@ -80,4 +80,16 @@ describe("Etapa Revisão", () => {
     );
     expect(replace).toHaveBeenCalledWith("/criar/tipo");
   });
+
+  it("mostra as ferramentas de edição do desenho sobre o preview do croqui", () => {
+    render(
+      <WizardProvider>
+        <ComTipo>
+          <EtapaRevisao />
+        </ComTipo>
+      </WizardProvider>
+    );
+    expect(screen.getByRole("toolbar", { name: /Ferramentas de edição/ })).toBeInTheDocument();
+    expect(screen.getByTestId("camada-edicao")).toBeInTheDocument();
+  });
 });

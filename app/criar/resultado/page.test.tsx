@@ -78,4 +78,17 @@ describe("Etapa Resultado", () => {
 
     expect(await screen.findByText(/Não foi possível gerar o PDF/)).toBeInTheDocument();
   });
+
+  it("mostra o croqui consolidado, sem as ferramentas de edição", () => {
+    render(
+      <WizardProvider>
+        <ComTipo>
+          <EtapaResultado />
+        </ComTipo>
+      </WizardProvider>
+    );
+    expect(screen.getByTestId("documento-croqui")).toBeInTheDocument();
+    expect(screen.queryByRole("toolbar")).toBeNull();
+    expect(screen.queryByTestId("camada-edicao")).toBeNull();
+  });
 });

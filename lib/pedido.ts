@@ -1,4 +1,5 @@
 import type { TipoProdutoId } from "@/produtos/tipos";
+import { DESENHO_INICIAL, type DesenhoEstado } from "./desenho";
 
 export type EtapaId = "tipo" | "pedido" | "especificacoes" | "imagem" | "revisao";
 
@@ -25,6 +26,8 @@ export type EstadoPedido = {
     custo: string;
     tabelaMadel: boolean;
   };
+  /** Posição da imagem e anotações (linhas, setas, textos...) editadas na etapa de Revisão. */
+  desenho: DesenhoEstado;
 };
 
 export const ESTADO_INICIAL: EstadoPedido = {
@@ -34,4 +37,5 @@ export const ESTADO_INICIAL: EstadoPedido = {
   especificacoes: {},
   imagem: { origem: null, bibliotecaId: null, uploadDataUrl: null },
   compra: { fornecedor: "", custo: "", tabelaMadel: false },
+  desenho: DESENHO_INICIAL,
 };
