@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWizard } from "@/lib/wizard-context";
+import { AjusteCelular } from "@/components/croqui/AjusteCelular";
 import { DocumentoCroqui } from "@/components/croqui/DocumentoCroqui";
 import { exportarComoPdf } from "@/lib/exportar-pdf";
 import { exportarComoImagem } from "@/lib/exportar-imagem";
@@ -64,9 +65,11 @@ export default function EtapaResultado() {
       <h1 className="mb-6 text-2xl font-semibold">Encomenda gerada</h1>
 
       <div className="relative mr-[calc(50%-50vw)] ml-[calc(50%-50vw)] mb-6 w-screen overflow-x-auto px-4">
-        <div ref={referenciaDocumento} className="mx-auto max-w-[1600px]">
-          <DocumentoCroqui estado={estado} />
-        </div>
+        <AjusteCelular>
+          <div ref={referenciaDocumento} className="mx-auto max-w-[1600px]">
+            <DocumentoCroqui estado={estado} />
+          </div>
+        </AjusteCelular>
       </div>
 
       {erro && <p className="mb-4 text-sm text-red-700">{erro}</p>}

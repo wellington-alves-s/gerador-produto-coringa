@@ -32,6 +32,7 @@ import { BarraFlutuante } from "@/components/ui/BarraFlutuante";
 import { Icone } from "@/components/ui/Icones";
 import { comprimirImagemComDimensoes } from "@/lib/imagem";
 import { carimboDaArea, type AreaSelecionada, type Carimbo } from "@/lib/apagamento";
+import { AjusteCelular } from "./AjusteCelular";
 import { DocumentoCroqui } from "./DocumentoCroqui";
 import { ID_IMAGEM, OverlayEdicao, type Ferramenta } from "./OverlayEdicao";
 
@@ -762,9 +763,11 @@ export function EditorDesenho() {
         ref={ancoraRef}
         className="relative mr-[calc(50%-50vw)] ml-[calc(50%-50vw)] mb-6 w-screen overflow-x-auto px-4"
       >
-        <div className="mx-auto max-w-[1600px]">
-          <DocumentoCroqui estado={{ ...estado, desenho }} camadaEdicao={camadaEdicao} />
-        </div>
+        <AjusteCelular>
+          <div className="mx-auto max-w-[1600px]">
+            <DocumentoCroqui estado={{ ...estado, desenho }} camadaEdicao={camadaEdicao} />
+          </div>
+        </AjusteCelular>
       </div>
     </>
   );
