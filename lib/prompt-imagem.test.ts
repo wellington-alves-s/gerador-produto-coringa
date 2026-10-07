@@ -187,6 +187,31 @@ describe("orientação e alongamento do degrau/patamar/rodapé", () => {
   });
 });
 
+describe("espessura do degrau/patamar/rodapé", () => {
+  const espessura = (e: EstadoPedido) =>
+    (montarDescricaoImagem(e) as { descricao_da_imagem: { detalhes_do_objeto: { espessura: string; formato: string } } })
+      .descricao_da_imagem.detalhes_do_objeto;
+
+  it("calcula a espessura (cm) como percentual da largura (m)", () => {
+    // 4,0 cm de espessura para 0,300 m de largura ≈ 13%
+    const d = espessura(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU", largura: "0300", espessura: "040" }));
+    expect(d.espessura).toMatch(/cerca de 13% da largura/);
+  });
+
+  it("sem medidas usa um percentual padrão baixo por peça", () => {
+    expect(espessura(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU" })).espessura).toMatch(/cerca de 12%/);
+    expect(espessura(estadoDe("degrau-patamar-rodape", { tipoPeca: "RODAPÉ" })).espessura).toMatch(/cerca de 10%/);
+    expect(espessura(estadoDe("degrau-patamar-rodape", { tipoPeca: "PATAMAR" })).espessura).toMatch(/cerca de 8%/);
+  });
+
+  it("limita o percentual em 25% e descreve a peça como fina, não como bloco", () => {
+    const d = espessura(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU", largura: "0100", espessura: "500" }));
+    expect(d.espessura).toMatch(/cerca de 25%/);
+    expect(d.formato).toMatch(/fina/);
+    expect(d.formato).toMatch(/não é um bloco/);
+  });
+});
+
 describe("montarPromptImagem", () => {
   it("inclui a instrução e o JSON, e menciona a referência só quando existe", () => {
     const estado = estadoDe("esquadria", { categoria: "VENEZIANA" });

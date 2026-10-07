@@ -251,7 +251,7 @@ const PRESETS_DEGRAU: Record<
 > = {
   degrau: {
     assunto: "Degrau de madeira",
-    formato: "Prancha retangular e espessa",
+    formato: "Prancha retangular fina e plana, de baixa espessura (não é um bloco, viga ou tijolo maciço)",
     textura: "Superfície lisa com veios naturais da madeira visíveis",
     acabamento: "Arestas retas e definidas",
     posicionamento:
@@ -259,7 +259,7 @@ const PRESETS_DEGRAU: Record<
   },
   rodape: {
     assunto: "Rodapé de madeira",
-    formato: "Retangular e longo",
+    formato: "Retangular, longo e fino (tábua de baixa espessura)",
     textura: "Grão e veios naturais da madeira visíveis",
     acabamento: "Rebordo superior arredondado (boleado)",
     posicionamento:
@@ -267,7 +267,7 @@ const PRESETS_DEGRAU: Record<
   },
   patamar: {
     assunto: "Patamar de madeira",
-    formato: "Placa plana, ampla e espessa",
+    formato: "Placa plana, ampla e de baixa espessura",
     textura: "Superfície plana com veios naturais da madeira alinhados verticalmente",
     acabamento: "Arestas retas",
     posicionamento: "Vista superior, com a peça na horizontal, exibindo a face principal plana e ampla",
@@ -279,6 +279,29 @@ const PECA_POR_OPCAO: Record<string, PecaDegrau> = { DEGRAU: "degrau", PATAMAR: 
 export function pecaDoPedido(estado: EstadoPedido): PecaDegrau {
   const escolhida = texto(estado, "tipoPeca");
   return (escolhida && PECA_POR_OPCAO[escolhida]) || detectarPecaDegrau(estado.pedido.descricao);
+}
+
+const METROS_POR_UNIDADE = { m: 1, cm: 0.01, mm: 0.001 } as const;
+
+/** Valor de uma medida convertido para metros, respeitando a unidade do campo. */
+function medidaEmMetros(estado: EstadoPedido, id: string): number | undefined {
+  const config = estado.tipo ? PRODUTOS[estado.tipo] : null;
+  const campo = config?.campos.find((c) => c.id === id);
+  const valor = metros(estado, id);
+  if (!campo || campo.tipo !== "medida" || valor === undefined) return undefined;
+  return valor * METROS_POR_UNIDADE[campo.unidade];
+}
+
+/** Espessura sempre descrita como fração da largura: modelos tendem a exagerar peças finas. */
+const ESPESSURA_PADRAO_PERCENTUAL: Record<PecaDegrau, number> = { degrau: 12, rodape: 10, patamar: 8 };
+const ESPESSURA_MAXIMA_PERCENTUAL = 25;
+
+function descreverEspessura(estado: EstadoPedido, peca: PecaDegrau): string {
+  const espessura = medidaEmMetros(estado, "espessura");
+  const largura = medidaEmMetros(estado, "largura");
+  const real = espessura && largura ? (espessura / largura) * 100 : 0;
+  const percentual = Math.round(Math.min(real > 0 ? real : ESPESSURA_PADRAO_PERCENTUAL[peca], ESPESSURA_MAXIMA_PERCENTUAL));
+  return `Peça fina: a espessura (altura da lateral) é só cerca de ${percentual}% da largura, bem menor que as demais dimensões`;
 }
 
 /** Alongamento mínimo (comprimento ÷ largura) por peça, para o modelo não desenhar uma placa "quadrada" ou em pé. */
@@ -312,6 +335,7 @@ function descreverDegrau(estado: EstadoPedido): DescricaoImagem {
         formato: preset.formato,
         orientacao: "Horizontal: o comprimento (lado maior) segue o eixo horizontal da imagem; a peça nunca aparece em pé",
         proporcao: alongamento,
+        espessura: descreverEspessura(estado, peca),
         acabamento: preset.acabamento,
         posicionamento: preset.posicionamento,
       },
