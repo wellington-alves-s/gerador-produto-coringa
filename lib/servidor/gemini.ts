@@ -14,6 +14,41 @@ export class ErroGeracaoImagem extends Error {
   }
 }
 
+type DetalheErro = { mensagem: string; status?: string };
+
+async function lerDetalheErro(resposta: Response): Promise<DetalheErro> {
+  try {
+    const corpo = await resposta.json();
+    return { mensagem: String(corpo?.error?.message ?? "").slice(0, 600), status: corpo?.error?.status };
+  } catch {
+    return { mensagem: "" };
+  }
+}
+
+/** Traduz a resposta de erro do Gemini em uma mensagem útil para quem está usando o app. */
+export function classificarErro(statusHttp: number, mensagemOriginal: string): ErroGeracaoImagem {
+  const texto = mensagemOriginal.toLowerCase();
+  if (statusHttp === 429) {
+    const semCota = /limit:\s*0|free.?tier|billing|plan and billing/.test(texto);
+    return semCota
+      ? new ErroGeracaoImagem(
+          "O serviço de imagens está sem cota disponível para esta chave (o plano gratuito pode não incluir geração de imagem). Avise o responsável pelo sistema.",
+          429
+        )
+      : new ErroGeracaoImagem("Muitas gerações em pouco tempo. Aguarde cerca de 1 minuto e tente novamente.", 429);
+  }
+  if (statusHttp === 404) {
+    return new ErroGeracaoImagem("O modelo de imagem configurado não está disponível. Avise o responsável pelo sistema.", 502);
+  }
+  if (statusHttp === 400 || statusHttp === 401 || statusHttp === 403) {
+    return new ErroGeracaoImagem(
+      "O serviço de imagens recusou a requisição (chave inválida ou sem permissão). Avise o responsável pelo sistema.",
+      502
+    );
+  }
+  return new ErroGeracaoImagem("O serviço de geração de imagem retornou um erro. Tente novamente em instantes.", 502);
+}
+
 export function chaveConfigurada(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
 }
@@ -54,12 +89,10 @@ export async function gerarImagemComGemini(prompt: string, referencia?: Referenc
   }
 
   if (!resposta.ok) {
-    const status = resposta.status === 429 ? 429 : 502;
-    const mensagem =
-      resposta.status === 429
-        ? "Limite de uso do serviço de imagens atingido. Tente novamente em instantes."
-        : "O serviço de geração de imagem retornou um erro.";
-    throw new ErroGeracaoImagem(mensagem, status);
+    const detalhe = await lerDetalheErro(resposta);
+    // Só vai para os logs do servidor (Vercel → Logs); a chave nunca aparece aqui nem na URL.
+    console.error(`[gerar-imagem] Gemini respondeu ${resposta.status} (modelo ${modelo}):`, detalhe);
+    throw classificarErro(resposta.status, detalhe.mensagem);
   }
 
   const imagem = extrairImagem(await resposta.json());
