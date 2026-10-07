@@ -202,4 +202,22 @@ describe("DocumentoCroqui", () => {
     expect(screen.getByAltText("Madel")).toHaveAttribute("src", "/marca/logo-madel.png");
     expect(screen.getByAltText(/Selo de qualidade/)).toHaveAttribute("src", "/marca/selo-qualidade.png");
   });
+
+  it("sem imagem mostra o quadriculado do desenho; com imagem o quadriculado some", () => {
+    const base = { ...ESTADO_INICIAL, tipo: "outros" as const };
+    const { container, rerender } = render(<DocumentoCroqui estado={base} />);
+    const temGrade = () =>
+      Array.from(container.querySelectorAll<HTMLElement>("div")).some((el) => el.style.backgroundSize === "20px 20px");
+
+    expect(screen.getByText("Sem imagem")).toBeInTheDocument();
+    expect(temGrade()).toBe(true);
+
+    rerender(
+      <DocumentoCroqui
+        estado={{ ...base, imagem: { origem: "upload", bibliotecaId: null, uploadDataUrl: "data:image/png;base64,QUJD" } }}
+      />
+    );
+    expect(screen.getByAltText("Desenho do produto")).toBeInTheDocument();
+    expect(temGrade()).toBe(false);
+  });
 });

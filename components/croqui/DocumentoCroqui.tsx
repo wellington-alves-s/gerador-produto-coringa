@@ -77,6 +77,8 @@ function CampoEspecificacao({ campo, valor }: { campo: Campo; valor: string | un
   );
 }
 
+// Papel quadriculado só no espaço vazio: com imagem (principalmente as de fundo branco),
+// o quadriculado aparecia em volta e deixava um "retângulo branco" solto no desenho.
 const ESTILO_GRADE_DESENHO = {
   backgroundImage:
     "linear-gradient(to right, rgba(0,0,0,0.08) 1px, transparent 1px), linear-gradient(to bottom, rgba(0,0,0,0.08) 1px, transparent 1px)",
@@ -308,7 +310,7 @@ export function DocumentoCroqui({ estado }: Props) {
           <div className="flex min-h-[220px] flex-1">
             <div
               className="flex flex-1 flex-col overflow-hidden border border-[#9ca3af] p-4"
-              style={ESTILO_GRADE_DESENHO}
+              style={imagemSrc ? undefined : ESTILO_GRADE_DESENHO}
             >
               {/* Régua da largura em fluxo normal (não position:absolute) — o
                   html2canvas não respeita "right"/calc() em elementos
