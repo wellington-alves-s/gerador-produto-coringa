@@ -21,7 +21,10 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
+    // A classe "dark" é aplicada pelo script abaixo antes da hidratação (evita piscar o tema),
+    // então o HTML do servidor sempre difere dela de propósito.
     <html
+      suppressHydrationWarning
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >

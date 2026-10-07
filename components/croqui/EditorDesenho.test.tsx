@@ -466,3 +466,43 @@ describe("EditorDesenho — imagem do produto", () => {
     expect(desenhoPersistido().imagem.cy).toBe(380);
   });
 });
+
+describe("EditorDesenho — barra flutuante expansível", () => {
+  it("começa recolhida (sem as opções do item) e expande ao selecionar um item", () => {
+    renderizar();
+    const botao = screen.getByRole("button", { name: "Mais opções" });
+    expect(botao).toHaveAttribute("aria-expanded", "false");
+    expect(screen.queryByRole("button", { name: "Girar 90°" })).toBeNull();
+
+    colocarTexto();
+    expect(screen.getByRole("button", { name: "Recolher opções" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("button", { name: "Girar 90°" })).toBeInTheDocument();
+  });
+
+  it("o botão de mais opções abre uma dica mesmo sem seleção e recolhe de novo", () => {
+    renderizar();
+    fireEvent.click(screen.getByRole("button", { name: "Mais opções" }));
+    expect(screen.getByText(/Clique em um item do desenho/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Recolher opções" }));
+    expect(screen.queryByText(/Clique em um item do desenho/)).toBeNull();
+  });
+
+  it("dá para recolher com um item selecionado, e a escolha vale só para aquela seleção", () => {
+    renderizar();
+    colocarTexto();
+    fireEvent.click(screen.getByRole("button", { name: "Recolher opções" }));
+    expect(screen.queryByRole("button", { name: "Girar 90°" })).toBeNull();
+
+    // outro item selecionado volta ao modo automático (expandido)
+    fireEvent.click(screen.getByRole("button", { name: "Seta" }));
+    fireEvent.pointerDown(fundo(), ponteiro(100, 500));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(100, 500));
+    expect(screen.getByRole("button", { name: "Girar 90°" })).toBeInTheDocument();
+  });
+
+  it("a barra tem alça para mover e botões com ícones decorativos (nome acessível só pelo texto)", () => {
+    renderizar();
+    expect(screen.getByRole("button", { name: "Mover barra de ferramentas" })).toBeInTheDocument();
+    expect(screen.getByRole("toolbar").querySelectorAll("svg[aria-hidden=true]").length).toBeGreaterThan(8);
+  });
+});
