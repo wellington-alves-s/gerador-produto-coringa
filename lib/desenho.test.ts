@@ -8,6 +8,7 @@ import {
   atualizarTexto,
   caixaDoTexto,
   criarComTamanhoPadrao,
+  criarImagem,
   criarLinha,
   criarRetangulo,
   criarTexto,
@@ -293,5 +294,21 @@ describe("histórico", () => {
     for (let i = 0; i < 150; i++) h = registrarNoHistorico(h, d(i));
     expect(h.passado).toHaveLength(100);
     expect(h.passado.at(-1)).toEqual(d(149));
+  });
+});
+
+describe("imagem colada", () => {
+  it("nasce com 400 de largura, na proporção original, no centro do quadro", () => {
+    const i = criarImagem("data:image/png;base64,X", 2);
+    expect(i).toMatchObject({ tipo: "imagem", src: "data:image/png;base64,X", largura: 400, altura: 200, cx: LARGURA_DESENHO / 2, cy: ALTURA_DESENHO / 2, rotacao: 0 });
+  });
+
+  it("limita a altura em 600 para imagens altas e aceita um centro", () => {
+    const alta = criarImagem("x", 0.25, { x: 100, y: 200 });
+    expect(alta).toMatchObject({ altura: 600, largura: 150, cx: 100, cy: 200 });
+  });
+
+  it("proporção inválida vira quadrada", () => {
+    expect(criarImagem("x", 0)).toMatchObject({ largura: 400, altura: 400 });
   });
 });

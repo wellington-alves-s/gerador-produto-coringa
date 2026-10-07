@@ -24,7 +24,7 @@ describe("comprimirImagem", () => {
     }
     vi.stubGlobal("Image", ImagemFalsa);
 
-    const contextoFalso = { drawImage: vi.fn() };
+    const contextoFalso = { drawImage: vi.fn(), fillRect: vi.fn(), fillStyle: "" };
     const canvasFalso = {
       width: 0,
       height: 0,

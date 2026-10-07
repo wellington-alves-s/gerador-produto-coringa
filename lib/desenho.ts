@@ -54,7 +54,14 @@ export type ElementoRetangulo = ElementoBase & {
   preenchimento: string | null;
 };
 
-export type ElementoDesenho = ElementoLinha | ElementoTexto | ElementoRetangulo;
+/** Imagem extra colada/adicionada pelo usuário (diferente da imagem principal do produto). */
+export type ElementoImagem = ElementoBase & {
+  tipo: "imagem";
+  /** Data URL já comprimida. */
+  src: string;
+};
+
+export type ElementoDesenho = ElementoLinha | ElementoTexto | ElementoRetangulo | ElementoImagem;
 
 export type DesenhoEstado = {
   elementos: ElementoDesenho[];
@@ -177,6 +184,21 @@ export function criarRetangulo(a: Ponto, b: Ponto): ElementoRetangulo {
     espessura: 4,
     preenchimento: null,
   };
+}
+
+const LARGURA_IMAGEM_COLADA = 400;
+const ALTURA_MAXIMA_IMAGEM_COLADA = 600;
+
+/** Imagem colada: até 400 unidades de largura (ou 600 de altura), proporção original, no centro do quadro. */
+export function criarImagem(src: string, proporcao: number, centro: Ponto = { x: LARGURA_DESENHO / 2, y: ALTURA_DESENHO / 2 }): ElementoImagem {
+  const razao = proporcao > 0 ? proporcao : 1;
+  let largura = LARGURA_IMAGEM_COLADA;
+  let altura = largura / razao;
+  if (altura > ALTURA_MAXIMA_IMAGEM_COLADA) {
+    altura = ALTURA_MAXIMA_IMAGEM_COLADA;
+    largura = altura * razao;
+  }
+  return { id: novoId(), tipo: "imagem", ...SEM_TRANSFORMACAO, cx: centro.x, cy: centro.y, largura, altura, src };
 }
 
 /** Tamanho padrão quando o usuário só clica (sem arrastar) com a ferramenta de forma. */

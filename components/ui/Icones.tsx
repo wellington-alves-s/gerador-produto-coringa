@@ -56,6 +56,12 @@ export const Icone = {
       <rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor" />
     </Svg>
   ),
+  Colar: () => (
+    <Svg>
+      <rect x="8" y="3" width="8" height="4" rx="1" />
+      <path d="M16 5h2a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2V7a2 2 0 012-2h2M9 13h6M9 17h4" />
+    </Svg>
+  ),
   ApagarArea: () => (
     <Svg>
       <rect x="4" y="5" width="16" height="14" rx="1" strokeDasharray="3 3" />

@@ -275,7 +275,7 @@ export function OverlayEdicao({
         } else {
           const canto = ALCAS_CANTO.includes(gesto.alca);
           novo = redimensionarPorAlca(original, gesto.alca, p, {
-            proporcional: !ehElemento(original) || (e.shiftKey && canto),
+            proporcional: !ehElemento(original) || original.tipo === "imagem" || (e.shiftKey && canto),
           });
         }
         break;
@@ -399,7 +399,7 @@ export function OverlayEdicao({
       );
     }
 
-    const apenasCantos = !ehElemento(alvo) || alvo.tipo === "texto";
+    const apenasCantos = !ehElemento(alvo) || alvo.tipo === "texto" || alvo.tipo === "imagem";
     const folga = ehElemento(alvo) && alvo.tipo === "texto" ? 4 : 0;
     return (
       <g transform={transformacao} data-selecao>
@@ -441,7 +441,7 @@ export function OverlayEdicao({
         />
       );
     }
-    if (elemento.tipo === "texto") {
+    if (elemento.tipo === "texto" || elemento.tipo === "imagem") {
       return (
         <rect
           x={-elemento.largura / 2 - 6}
@@ -449,7 +449,7 @@ export function OverlayEdicao({
           width={elemento.largura + 12}
           height={elemento.altura + 8}
           fill="transparent"
-          onDoubleClick={() => aoEditarTexto(elemento.id)}
+          onDoubleClick={elemento.tipo === "texto" ? () => aoEditarTexto(elemento.id) : undefined}
           {...comum}
           style={{ ...comum.style, pointerEvents: ativo ?? "all" }}
         />

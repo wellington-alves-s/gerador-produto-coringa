@@ -1,4 +1,4 @@
-import type { ElementoDesenho, ElementoLinha, ElementoRetangulo, ElementoTexto, Transformacao } from "@/lib/desenho";
+import type { ElementoDesenho, ElementoImagem, ElementoLinha, ElementoRetangulo, ElementoTexto, Transformacao } from "@/lib/desenho";
 
 /** Transformação SVG de um elemento: posiciona no centro, gira e espelha em torno dele. */
 export function transformacaoSvg(t: Transformacao, comEspelho = true): string {
@@ -66,12 +66,26 @@ function Retangulo({ elemento }: { elemento: ElementoRetangulo }) {
   );
 }
 
+function Imagem({ elemento }: { elemento: ElementoImagem }) {
+  return (
+    <image
+      href={elemento.src}
+      x={-elemento.largura / 2}
+      y={-elemento.altura / 2}
+      width={elemento.largura}
+      height={elemento.altura}
+      preserveAspectRatio="none"
+    />
+  );
+}
+
 export function ElementoSvg({ elemento }: { elemento: ElementoDesenho }) {
   return (
     <g transform={transformacaoSvg(elemento)} data-elemento={elemento.tipo}>
       {elemento.tipo === "linha" && <Linha elemento={elemento} />}
       {elemento.tipo === "texto" && <Texto elemento={elemento} />}
       {elemento.tipo === "retangulo" && <Retangulo elemento={elemento} />}
+      {elemento.tipo === "imagem" && <Imagem elemento={elemento} />}
     </g>
   );
 }

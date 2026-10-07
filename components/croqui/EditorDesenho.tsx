@@ -8,6 +8,7 @@ import {
   DESENHO_INICIAL,
   HISTORICO_VAZIO,
   atualizarTexto,
+  criarImagem,
   desfazer,
   duplicarElemento,
   espelharHorizontal,
@@ -29,6 +30,7 @@ import {
 } from "@/lib/desenho";
 import { BarraFlutuante } from "@/components/ui/BarraFlutuante";
 import { Icone } from "@/components/ui/Icones";
+import { comprimirImagemComDimensoes } from "@/lib/imagem";
 import { carimboDaArea, type AreaSelecionada, type Carimbo } from "@/lib/apagamento";
 import { DocumentoCroqui } from "./DocumentoCroqui";
 import { ID_IMAGEM, OverlayEdicao, type Ferramenta } from "./OverlayEdicao";
@@ -114,6 +116,8 @@ export function EditorDesenho() {
   const [ferramenta, setFerramenta] = useState<Ferramenta>("selecionar");
   const [tamanhoBorracha, setTamanhoBorracha] = useState(40);
   const [selecaoArea, setSelecaoArea] = useState<AreaSelecionada | null>(null);
+  const [avisoColar, setAvisoColar] = useState<string | null>(null);
+  const temporizadorAviso = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pedidoFocoTexto, setPedidoFocoTexto] = useState(0);
   const campoTextoRef = useRef<HTMLTextAreaElement>(null);
   const ancoraRef = useRef<HTMLDivElement>(null);
@@ -197,6 +201,60 @@ export function EditorDesenho() {
     setSelecionado(novo.id);
     if (novo.tipo === "texto") setPedidoFocoTexto((n) => n + 1);
   }
+
+  function avisar(mensagem: string) {
+    setAvisoColar(mensagem);
+    if (temporizadorAviso.current) clearTimeout(temporizadorAviso.current);
+    temporizadorAviso.current = setTimeout(() => setAvisoColar(null), 5000);
+  }
+
+  /** Imagem da área de transferência (Ctrl+V ou botão) vira um item novo do desenho. */
+  async function colarImagem(arquivo: File) {
+    try {
+      const { dataUrl, largura, altura } = await comprimirImagemComDimensoes(arquivo, { larguraMaxima: 1200, qualidade: 0.82 });
+      criar(criarImagem(dataUrl, largura / altura));
+      setFerramenta("selecionar");
+    } catch {
+      avisar("Não foi possível usar a imagem colada. Tente copiá-la de novo.");
+    }
+  }
+
+  async function colarDoBotao() {
+    try {
+      const itens = await navigator.clipboard.read();
+      for (const item of itens) {
+        const tipo = item.types.find((t) => t.startsWith("image/"));
+        if (tipo) {
+          const blob = await item.getType(tipo);
+          await colarImagem(new File([blob], "colada", { type: tipo }));
+          return;
+        }
+      }
+      avisar("Não há imagem na área de transferência. Copie uma imagem e tente de novo.");
+    } catch {
+      avisar("O navegador não liberou o acesso à área de transferência. Clique no desenho e use Ctrl+V.");
+    }
+  }
+
+  useEffect(() => {
+    function aoColar(e: ClipboardEvent) {
+      if (digitando(e.target)) return; // colar texto em um campo continua normal
+      const itens = Array.from(e.clipboardData?.items ?? []);
+      const arquivo = itens.find((i) => i.kind === "file" && i.type.startsWith("image/"))?.getAsFile();
+      if (!arquivo) return;
+      e.preventDefault();
+      void colarImagem(arquivo);
+    }
+    window.addEventListener("paste", aoColar);
+    return () => window.removeEventListener("paste", aoColar);
+  });
+
+  useEffect(
+    () => () => {
+      if (temporizadorAviso.current) clearTimeout(temporizadorAviso.current);
+    },
+    []
+  );
 
   function excluir() {
     if (!elemento) return;
@@ -383,6 +441,21 @@ export function EditorDesenho() {
 
       <button
         type="button"
+        title="Cola a imagem copiada (também funciona com Ctrl+V)"
+        className={BOTAO}
+        onClick={() => void colarDoBotao()}
+      >
+        <Icone.Colar />
+        Colar imagem
+      </button>
+      {avisoColar && (
+        <span role="status" className="max-w-xs px-2 text-xs text-amber-300">
+          {avisoColar}
+        </span>
+      )}
+
+      <button
+        type="button"
         aria-label={expandido ? "Recolher opções" : "Mais opções"}
         aria-expanded={expandido}
         title={expandido ? "Recolher opções" : "Mais opções"}
@@ -514,6 +587,7 @@ export function EditorDesenho() {
 
       {elemento && !emFerramentaApagar && (
         <>
+          {elemento.tipo !== "imagem" && (
           <label className="flex items-center gap-1 px-1">
             Cor
             <input
@@ -533,6 +607,7 @@ export function EditorDesenho() {
               }
             />
           </label>
+          )}
 
           {(elemento.tipo === "linha" || elemento.tipo === "retangulo") && (
             <label className="flex items-center gap-1 px-1">

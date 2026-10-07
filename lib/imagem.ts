@@ -10,10 +10,13 @@ export function calcularDimensoesComprimidas(
   return { largura: larguraMaxima, altura: Math.round(alturaOriginal * fator) };
 }
 
-export function comprimirImagem(
+export type ImagemComprimida = { dataUrl: string; largura: number; altura: number };
+
+/** Comprime para JPEG (com fundo branco no lugar de transparência) e devolve também as dimensões finais. */
+export function comprimirImagemComDimensoes(
   arquivo: File,
   { larguraMaxima = 1600, qualidade = 0.8 }: { larguraMaxima?: number; qualidade?: number } = {}
-): Promise<string> {
+): Promise<ImagemComprimida> {
   return new Promise((resolve, reject) => {
     const leitor = new FileReader();
     leitor.onerror = () => reject(leitor.error);
@@ -30,11 +33,21 @@ export function comprimirImagem(
           reject(new Error("Canvas 2D não disponível neste navegador"));
           return;
         }
+        // JPEG não tem transparência: sem isto, partes transparentes de um PNG viravam preto.
+        contexto.fillStyle = "#ffffff";
+        contexto.fillRect(0, 0, largura, altura);
         contexto.drawImage(imagem, 0, 0, largura, altura);
-        resolve(canvas.toDataURL("image/jpeg", qualidade));
+        resolve({ dataUrl: canvas.toDataURL("image/jpeg", qualidade), largura, altura });
       };
       imagem.src = leitor.result as string;
     };
     leitor.readAsDataURL(arquivo);
   });
+}
+
+export async function comprimirImagem(
+  arquivo: File,
+  opcoes: { larguraMaxima?: number; qualidade?: number } = {}
+): Promise<string> {
+  return (await comprimirImagemComDimensoes(arquivo, opcoes)).dataUrl;
 }

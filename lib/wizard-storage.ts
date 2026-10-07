@@ -5,18 +5,26 @@ export const CHAVE_RASCUNHO = "produto-coringa:rascunho";
 
 const ETAPAS_VALIDAS: EtapaId[] = ["tipo", "pedido", "especificacoes", "imagem", "revisao"];
 
+/** Versões do rascunho, da mais completa para a mais enxuta, para quando o localStorage estoura a cota. */
+function versoesDoRascunho(estado: EstadoPedido): EstadoPedido[] {
+  const semImagensColadas: EstadoPedido = {
+    ...estado,
+    desenho: { ...estado.desenho, elementos: estado.desenho.elementos.filter((e) => e.tipo !== "imagem") },
+  };
+  const semNadaPesado: EstadoPedido = {
+    ...semImagensColadas,
+    imagem: { ...estado.imagem, uploadDataUrl: null },
+  };
+  return [estado, semImagensColadas, semNadaPesado];
+}
+
 export function salvarRascunho(estado: EstadoPedido): void {
-  try {
-    window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(estado));
-  } catch {
+  for (const versao of versoesDoRascunho(estado)) {
     try {
-      const semImagemAvulsa: EstadoPedido = {
-        ...estado,
-        imagem: { ...estado.imagem, uploadDataUrl: null },
-      };
-      window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(semImagemAvulsa));
+      window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(versao));
+      return;
     } catch {
-      // localStorage genuinely indisponível (modo privado, cota esgotada mesmo sem a imagem) — ignora
+      // cota esgotada (ou localStorage indisponível): tenta a próxima versão, mais leve
     }
   }
 }

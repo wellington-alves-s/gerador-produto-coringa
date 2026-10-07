@@ -5,6 +5,12 @@ import { useEffect, type ReactNode } from "react";
 import { WizardProvider, useWizard } from "@/lib/wizard-context";
 import { EditorDesenho } from "./EditorDesenho";
 
+const comprimirMock = vi.hoisted(() => vi.fn());
+vi.mock("@/lib/imagem", async (importarOriginal) => ({
+  ...(await importarOriginal<typeof import("@/lib/imagem")>()),
+  comprimirImagemComDimensoes: (...args: unknown[]) => comprimirMock(...args),
+}));
+
 function ComTipo({ children }: { children: ReactNode }) {
   const { dispatch } = useWizard();
   useEffect(() => {
@@ -750,5 +756,136 @@ describe("EditorDesenho — apagar área e borracha", () => {
     fireEvent.pointerUp(camadaEdicao(), ponteiro(500, 500));
     fireEvent.click(screen.getByRole("button", { name: "Seta" }));
     expect(camadaEdicao().querySelector("[data-selecao-area]")).toBeNull();
+  });
+});
+
+describe("EditorDesenho — colar imagem da área de transferência", () => {
+  const arquivoPng = () => new File(["conteudo"], "print.png", { type: "image/png" });
+  const areaDeTransferencia = (itens: { kind: string; type: string; getAsFile?: () => File | null }[]) => ({ clipboardData: { items: itens } });
+  const imagemNaAreaDeTransferencia = () =>
+    areaDeTransferencia([{ kind: "file", type: "image/png", getAsFile: () => arquivoPng() }]);
+
+  beforeEach(() => {
+    comprimirMock.mockReset().mockResolvedValue({ dataUrl: "data:image/jpeg;base64,COLADA", largura: 800, altura: 400 });
+  });
+
+  it("Ctrl+V com uma imagem cria um item novo, selecionado, no centro do quadro", async () => {
+    renderizar();
+    fireEvent.paste(window, imagemNaAreaDeTransferencia());
+
+    await waitFor(() => expect(desenhoPersistido().elementos).toHaveLength(1));
+    expect(desenhoPersistido().elementos[0]).toMatchObject({
+      tipo: "imagem",
+      src: "data:image/jpeg;base64,COLADA",
+      cx: 500,
+      cy: 575,
+      largura: 400,
+      altura: 200, // proporção 2:1 preservada
+    });
+    expect(comprimirMock).toHaveBeenCalledWith(expect.any(File), expect.objectContaining({ larguraMaxima: 1200 }));
+    // selecionado: as opções de posição aparecem, mas não as de cor
+    expect(screen.getByRole("button", { name: "Girar 90°" })).toBeInTheDocument();
+    expect(screen.queryByLabelText("Cor")).toBeNull();
+  });
+
+  it("a imagem colada é desenhada no SVG e se comporta como os outros itens", async () => {
+    renderizar();
+    fireEvent.paste(window, imagemNaAreaDeTransferencia());
+    await waitFor(() => expect(elementos()).toHaveLength(1));
+    const imagem = screen.getByTestId("camada-elementos").querySelector("g[data-elemento=imagem] image");
+    expect(imagem).toHaveAttribute("href", "data:image/jpeg;base64,COLADA");
+
+    fireEvent.click(screen.getByRole("button", { name: "Girar 90°" }));
+    fireEvent.click(screen.getByRole("button", { name: "Espelhar horizontal" }));
+    fireEvent.keyDown(window, { key: "ArrowRight", shiftKey: true });
+    expect(desenhoPersistido().elementos[0]).toMatchObject({ rotacao: 90, espelhoH: true, cx: 520 });
+
+    fireEvent.click(screen.getByRole("button", { name: "Duplicar" }));
+    expect(elementos()).toHaveLength(2);
+    fireEvent.click(screen.getByRole("button", { name: "Excluir" }));
+    expect(elementos()).toHaveLength(1);
+  });
+
+  it("só tem alças de canto e redimensiona mantendo a proporção", async () => {
+    renderizar();
+    fireEvent.paste(window, imagemNaAreaDeTransferencia());
+    await waitFor(() => expect(elementos()).toHaveLength(1));
+    const alcas = Array.from(camadaEdicao().querySelectorAll("[data-alca]")).map((a) => a.getAttribute("data-alca"));
+    expect(alcas).not.toContain("n");
+    expect(alcas).toContain("se");
+
+    // canto inferior direito: (500+200, 575+100) → arrasta para fora, só na horizontal
+    fireEvent.pointerDown(camadaEdicao().querySelector("[data-alca=se]") as Element, ponteiro(700, 675));
+    fireEvent.pointerMove(camadaEdicao(), ponteiro(900, 675));
+    fireEvent.pointerUp(camadaEdicao(), ponteiro(900, 675));
+    const imagem = desenhoPersistido().elementos[0];
+    expect(imagem.largura / imagem.altura).toBeCloseTo(2);
+    expect(imagem.largura).toBeGreaterThan(400);
+  });
+
+  it("colar é um passo só no histórico (Ctrl+Z remove a imagem colada)", async () => {
+    renderizar();
+    fireEvent.paste(window, imagemNaAreaDeTransferencia());
+    await waitFor(() => expect(elementos()).toHaveLength(1));
+    fireEvent.keyDown(window, { key: "z", ctrlKey: true });
+    expect(elementos()).toHaveLength(0);
+  });
+
+  it("imagens muito altas são limitadas a 600 de altura, mantendo a proporção", async () => {
+    comprimirMock.mockResolvedValue({ dataUrl: "data:image/jpeg;base64,ALTA", largura: 300, altura: 1200 });
+    renderizar();
+    fireEvent.paste(window, imagemNaAreaDeTransferencia());
+    await waitFor(() => expect(desenhoPersistido().elementos).toHaveLength(1));
+    expect(desenhoPersistido().elementos[0]).toMatchObject({ altura: 600, largura: 150 });
+  });
+
+  it("colar texto (sem imagem) não faz nada", async () => {
+    renderizar();
+    fireEvent.paste(window, areaDeTransferencia([{ kind: "string", type: "text/plain" }]));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(comprimirMock).not.toHaveBeenCalled();
+    expect(elementos()).toHaveLength(0);
+  });
+
+  it("colar dentro de um campo de texto continua sendo a colagem normal do campo", async () => {
+    renderizar();
+    colocarTexto();
+    const campo = screen.getByLabelText("Texto do elemento");
+    fireEvent.paste(campo, imagemNaAreaDeTransferencia());
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(comprimirMock).not.toHaveBeenCalled();
+    expect(elementos()).toHaveLength(1);
+  });
+
+  it("se a imagem não puder ser processada, avisa sem quebrar", async () => {
+    comprimirMock.mockRejectedValue(new Error("imagem inválida"));
+    renderizar();
+    fireEvent.paste(window, imagemNaAreaDeTransferencia());
+    expect(await screen.findByRole("status")).toHaveTextContent(/Não foi possível usar a imagem colada/);
+    expect(elementos()).toHaveLength(0);
+  });
+
+  it("o botão Colar imagem lê a área de transferência do navegador", async () => {
+    vi.stubGlobal("navigator", {
+      ...navigator,
+      clipboard: { read: async () => [{ types: ["text/plain", "image/png"], getType: async () => new Blob(["x"], { type: "image/png" }) }] },
+    });
+    renderizar();
+    fireEvent.click(screen.getByRole("button", { name: "Colar imagem" }));
+    await waitFor(() => expect(desenhoPersistido().elementos).toHaveLength(1));
+    expect(desenhoPersistido().elementos[0].tipo).toBe("imagem");
+    vi.unstubAllGlobals();
+  });
+
+  it("o botão avisa quando não há imagem copiada e quando o navegador nega o acesso", async () => {
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { read: async () => [{ types: ["text/plain"], getType: async () => new Blob() }] } });
+    renderizar();
+    fireEvent.click(screen.getByRole("button", { name: "Colar imagem" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(/Não há imagem na área de transferência/);
+
+    vi.stubGlobal("navigator", { ...navigator, clipboard: { read: async () => Promise.reject(new Error("negado")) } });
+    fireEvent.click(screen.getByRole("button", { name: "Colar imagem" }));
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent(/não liberou o acesso/));
+    vi.unstubAllGlobals();
   });
 });
