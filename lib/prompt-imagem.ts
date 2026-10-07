@@ -255,7 +255,7 @@ const PRESETS_DEGRAU: Record<
     textura: "Superfície lisa com veios naturais da madeira visíveis",
     acabamento: "Arestas retas e definidas",
     posicionamento:
-      "Vista em perspetiva, exibindo a face frontal ampla, o rebordo superior e a secção de corte lateral direita",
+      "Peça deitada na horizontal, apoiada na face maior. Vista em perspetiva, exibindo a face frontal ampla, o rebordo superior e a secção de corte lateral direita",
   },
   rodape: {
     assunto: "Rodapé de madeira",
@@ -263,14 +263,14 @@ const PRESETS_DEGRAU: Record<
     textura: "Grão e veios naturais da madeira visíveis",
     acabamento: "Rebordo superior arredondado (boleado)",
     posicionamento:
-      "Vista em perspetiva, estendendo-se do canto inferior esquerdo em direção ao canto superior direito",
+      "Peça deitada na horizontal. Vista em perspetiva, estendendo-se do canto inferior esquerdo em direção ao canto superior direito",
   },
   patamar: {
     assunto: "Patamar de madeira",
     formato: "Placa plana, ampla e espessa",
     textura: "Superfície plana com veios naturais da madeira alinhados verticalmente",
     acabamento: "Arestas retas",
-    posicionamento: "Vista superior, exibindo a face principal plana e ampla da peça",
+    posicionamento: "Vista superior, com a peça na horizontal, exibindo a face principal plana e ampla",
   },
 };
 
@@ -281,11 +281,25 @@ export function pecaDoPedido(estado: EstadoPedido): PecaDegrau {
   return (escolhida && PECA_POR_OPCAO[escolhida]) || detectarPecaDegrau(estado.pedido.descricao);
 }
 
+/** Alongamento mínimo (comprimento ÷ largura) por peça, para o modelo não desenhar uma placa "quadrada" ou em pé. */
+const ALONGAMENTO_MINIMO: Record<PecaDegrau, number> = { degrau: 3, rodape: 6, patamar: 1 };
+const ALONGAMENTO_MAXIMO = 12;
+
+function descreverAlongamento(estado: EstadoPedido, peca: PecaDegrau): string | undefined {
+  const comprimento = metros(estado, "comprimento");
+  const largura = metros(estado, "largura");
+  const real = comprimento && largura ? comprimento / largura : 0;
+  const razao = Math.min(Math.max(real, ALONGAMENTO_MINIMO[peca]), ALONGAMENTO_MAXIMO);
+  if (razao < 1.15) return undefined;
+  const aproximada = razao.toFixed(1).replace(".", ",");
+  return `Comprimento (lado maior) cerca de ${aproximada} vezes a largura: peça nitidamente alongada, bem mais comprida do que larga`;
+}
+
 function descreverDegrau(estado: EstadoPedido): DescricaoImagem {
   const peca = pecaDoPedido(estado);
   const preset = PRESETS_DEGRAU[peca];
   const madeira = texto(estado, "tipoMadeira");
-  const formaGeral = proporcao(metros(estado, "comprimento"), metros(estado, "largura"));
+  const alongamento = descreverAlongamento(estado, peca);
 
   return {
     descricao_da_imagem: {
@@ -295,9 +309,9 @@ function descreverDegrau(estado: EstadoPedido): DescricaoImagem {
         material: madeira ? `Madeira (${minusculas(madeira)})` : "Madeira",
         cor: madeira ? `Tonalidade natural de ${minusculas(madeira)}` : "Castanho claro com tom de mel",
         textura: preset.textura,
-        formato: [preset.formato, formaGeral ? `comprimento em relação à largura: ${formaGeral.toLocaleLowerCase("pt-BR")}` : undefined]
-          .filter(Boolean)
-          .join(". "),
+        formato: preset.formato,
+        orientacao: "Horizontal: o comprimento (lado maior) segue o eixo horizontal da imagem; a peça nunca aparece em pé",
+        proporcao: alongamento,
         acabamento: preset.acabamento,
         posicionamento: preset.posicionamento,
       },

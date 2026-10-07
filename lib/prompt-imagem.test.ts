@@ -152,6 +152,41 @@ describe("degrau / patamar / rodapé", () => {
   });
 });
 
+describe("orientação e alongamento do degrau/patamar/rodapé", () => {
+  type Detalhes = { orientacao: string; proporcao?: string; posicionamento: string };
+  const detalhes = (e: EstadoPedido) =>
+    (montarDescricaoImagem(e) as { descricao_da_imagem: { detalhes_do_objeto: Detalhes } }).descricao_da_imagem.detalhes_do_objeto;
+
+  it("sempre manda deitar a peça na horizontal", () => {
+    for (const tipoPeca of ["DEGRAU", "PATAMAR", "RODAPÉ"]) {
+      const d = detalhes(estadoDe("degrau-patamar-rodape", { tipoPeca }));
+      expect(d.orientacao).toMatch(/Horizontal/);
+      expect(d.orientacao).toMatch(/nunca aparece em pé/);
+    }
+    expect(detalhes(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU" })).posicionamento).toMatch(/deitada na horizontal/);
+  });
+
+  it("usa a proporção real comprimento ÷ largura quando ela é maior que o mínimo", () => {
+    const d = detalhes(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU", comprimento: "1200", largura: "0300" }));
+    expect(d.proporcao).toMatch(/cerca de 4,0 vezes a largura/);
+  });
+
+  it("sem medidas (ou com medidas quase quadradas), aplica o alongamento mínimo do degrau e do rodapé", () => {
+    expect(detalhes(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU" })).proporcao).toMatch(/cerca de 3,0 vezes/);
+    expect(detalhes(estadoDe("degrau-patamar-rodape", { tipoPeca: "RODAPÉ" })).proporcao).toMatch(/cerca de 6,0 vezes/);
+    expect(
+      detalhes(estadoDe("degrau-patamar-rodape", { tipoPeca: "DEGRAU", comprimento: "0400", largura: "0400" })).proporcao
+    ).toMatch(/cerca de 3,0 vezes/);
+  });
+
+  it("limita o alongamento a 12 vezes e não força alongamento no patamar sem medidas", () => {
+    expect(
+      detalhes(estadoDe("degrau-patamar-rodape", { tipoPeca: "RODAPÉ", comprimento: "3000", largura: "0050" })).proporcao
+    ).toMatch(/cerca de 12,0 vezes/);
+    expect(detalhes(estadoDe("degrau-patamar-rodape", { tipoPeca: "PATAMAR" })).proporcao).toBeUndefined();
+  });
+});
+
 describe("montarPromptImagem", () => {
   it("inclui a instrução e o JSON, e menciona a referência só quando existe", () => {
     const estado = estadoDe("esquadria", { categoria: "VENEZIANA" });
