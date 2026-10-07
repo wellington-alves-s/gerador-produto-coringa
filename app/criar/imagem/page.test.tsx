@@ -171,4 +171,26 @@ describe("Etapa Imagem", () => {
     await user.click(screen.getByRole("button", { name: "Tentar de novo" }));
     expect(await screen.findByAltText("Imagem gerada por IA")).toBeInTheDocument();
   });
+
+  it("o botão Gerar imagem tem o símbolo do Gemini e fica ao lado da imagem selecionada, no topo", async () => {
+    const user = userEvent.setup();
+    render(
+      <WizardProvider>
+        <ComTipo tipo="esquadria">
+          <EtapaImagem />
+        </ComTipo>
+      </WizardProvider>
+    );
+
+    const botao = screen.getByRole("button", { name: "Gerar imagem" });
+    expect(botao.querySelector("svg[aria-hidden=true]")).not.toBeNull();
+    // sem imagem: o botão já aparece no topo, antes do bloco de upload
+    const upload = screen.getByText("Upload de imagem avulsa");
+    expect(botao.compareDocumentPosition(upload) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    await user.click(screen.getByAltText("Porta Balcão Arco"));
+    const imagem = screen.getByAltText("Imagem selecionada");
+    // com imagem: mesma linha (mesmo contêiner flex) que o preview
+    expect(botao.closest("div.flex")).toBe(imagem.closest("div.flex"));
+  });
 });

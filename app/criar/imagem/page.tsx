@@ -10,6 +10,7 @@ import { buscarImagens, caminhoImagem } from "@/lib/biblioteca";
 import { comprimirImagem } from "@/lib/imagem";
 import { podeGerarImagem } from "@/lib/prompt-imagem";
 import { dataUrlParaArquivo, obterReferenciaDataUrl, solicitarImagemGerada } from "@/lib/gerar-imagem-cliente";
+import { LogoGemini } from "@/components/ui/LogoGemini";
 import { ModalImagemGerada, type EstadoGeracao } from "@/components/ui/ModalImagemGerada";
 
 export default function EtapaImagem() {
@@ -90,19 +91,38 @@ export default function EtapaImagem() {
       <StepIndicator etapaAtual="imagem" />
       <h1 className="mb-6 text-2xl font-semibold">Imagem do produto</h1>
 
-      {previewSrc && (
-        <div className="mb-6">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={previewSrc} alt="Imagem selecionada" className="max-h-48 rounded-md border" />
-          <button
-            type="button"
-            onClick={() => dispatch({ type: "REMOVER_IMAGEM" })}
-            className="mt-2 rounded-md border border-red-700 px-3 py-1 text-sm text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-950/40"
-          >
-            Remover imagem
-          </button>
-        </div>
-      )}
+      <div className="mb-6 flex flex-wrap items-start gap-x-8 gap-y-4">
+        {previewSrc && (
+          <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={previewSrc} alt="Imagem selecionada" className="max-h-48 rounded-md border" />
+            <button
+              type="button"
+              onClick={() => dispatch({ type: "REMOVER_IMAGEM" })}
+              className="mt-2 rounded-md border border-red-700 px-3 py-1 text-sm text-red-700 hover:bg-red-50 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-950/40"
+            >
+              Remover imagem
+            </button>
+          </div>
+        )}
+
+        {podeGerarImagem(estado.tipo) && (
+          <div className="max-w-xs">
+            <button
+              type="button"
+              onClick={gerarImagem}
+              disabled={geracao?.status === "gerando"}
+              className="inline-flex items-center gap-2.5 rounded-xl border-2 border-red-700 bg-white px-5 py-3 text-base font-semibold text-red-700 shadow-md transition hover:bg-red-50 hover:shadow-lg disabled:opacity-40 dark:border-red-500 dark:bg-gray-900 dark:text-red-300 dark:hover:bg-red-950/40"
+            >
+              <LogoGemini tamanho={24} />
+              Gerar imagem
+            </button>
+            <p className="mt-2 text-xs text-gray-600 dark:text-gray-400">
+              Cria uma imagem de referência com IA a partir das especificações que você preencheu.
+            </p>
+          </div>
+        )}
+      </div>
 
       <div className="mb-6">
         <label className="mb-1 block text-sm font-medium">Upload de imagem avulsa</label>
@@ -121,16 +141,6 @@ export default function EtapaImagem() {
           Escolher imagem…
         </button>
         {erroUpload && <p className="mt-1 text-sm text-red-700">{erroUpload}</p>}
-        {podeGerarImagem(estado.tipo) && (
-          <button
-            type="button"
-            onClick={gerarImagem}
-            disabled={geracao?.status === "gerando"}
-            className="ml-3 rounded-md border border-red-700 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-40 dark:border-red-600 dark:text-red-400 dark:hover:bg-red-950/40"
-          >
-            Gerar imagem
-          </button>
-        )}
       </div>
 
       <div>
