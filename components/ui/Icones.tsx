@@ -51,9 +51,15 @@ export const Icone = {
       <rect x="4" y="5" width="16" height="14" rx="2" />
     </Svg>
   ),
-  RetanguloCheio: () => (
+  Editar: () => (
     <Svg>
-      <rect x="4" y="5" width="16" height="14" rx="2" fill="currentColor" />
+      <path d="M12 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" />
+      <path d="M18.4 2.6a2.1 2.1 0 013 3L12 15l-4 1 1-4z" />
+    </Svg>
+  ),
+  Minimizar: () => (
+    <Svg>
+      <path d="M5 12h14" />
     </Svg>
   ),
   Colar: () => (

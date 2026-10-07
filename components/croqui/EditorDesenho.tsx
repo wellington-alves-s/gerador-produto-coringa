@@ -67,7 +67,7 @@ function reducerEditor(estado: EstadoEditor, acao: AcaoEditor): EstadoEditor {
 // ---------- componentes de interface ----------
 
 const BOTAO =
-  "inline-flex items-center gap-1 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[13px] font-medium text-slate-100 transition hover:bg-white/15 disabled:opacity-40 disabled:hover:bg-white/5";
+  "inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 text-[13px] font-medium text-slate-100 transition hover:bg-white/15 disabled:opacity-40 disabled:hover:bg-white/5";
 const BOTAO_ATIVO = "!border-red-500/70 !bg-red-500/10 !text-red-300";
 const BOTAO_PERIGO = "!border-red-500/40 !text-red-300";
 const CAMPO = "rounded-lg border border-white/10 bg-white/5 px-1.5 py-0.5 text-slate-100";
@@ -75,7 +75,7 @@ const SEPARADOR = <span aria-hidden="true" className="mx-0.5 hidden h-5 w-px bg-
 
 function Grupo({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <div role="group" aria-label={titulo} className="flex flex-wrap items-center gap-1">
+    <div role="group" aria-label={titulo} className="flex shrink-0 flex-nowrap items-center gap-1">
       {children}
     </div>
   );
@@ -88,7 +88,6 @@ const FERRAMENTAS: { id: Ferramenta; rotulo: string; nomeAcessivel?: string; ico
   { id: "seta-dupla", rotulo: "Seta dupla", icone: <Icone.SetaDupla /> },
   { id: "texto", rotulo: "Texto", icone: <Icone.Texto /> },
   { id: "retangulo", rotulo: "Retângulo", icone: <Icone.Retangulo /> },
-  { id: "retangulo-cheio", rotulo: "Preenchido", nomeAcessivel: "Retângulo preenchido", icone: <Icone.RetanguloCheio /> },
   { id: "apagar-area", rotulo: "Apagar área", icone: <Icone.ApagarArea /> },
   { id: "borracha", rotulo: "Borracha", icone: <Icone.Borracha /> },
 ];
@@ -122,6 +121,7 @@ export function EditorDesenho() {
   const campoTextoRef = useRef<HTMLTextAreaElement>(null);
   const ancoraRef = useRef<HTMLDivElement>(null);
   // `null` = automático (expande quando há algo selecionado); o botão "•••" força abrir/fechar para a seleção atual.
+  const [barraMinimizada, setBarraMinimizada] = useState(false);
   const [expansaoManual, setExpansaoManual] = useState<{ para: string | null; aberto: boolean } | null>(null);
 
   // O que sumiu (desfazer, excluir) deixa de estar selecionado.
@@ -441,19 +441,24 @@ export function EditorDesenho() {
 
       <button
         type="button"
+        aria-label="Colar imagem"
         title="Cola a imagem copiada (também funciona com Ctrl+V)"
         className={BOTAO}
         onClick={() => void colarDoBotao()}
       >
         <Icone.Colar />
-        Colar imagem
+        Colar
       </button>
       {avisoColar && (
         <span role="status" className="max-w-xs px-2 text-xs text-amber-300">
           {avisoColar}
         </span>
       )}
+    </>
+  );
 
+  const acoes = (
+    <>
       <button
         type="button"
         aria-label={expandido ? "Recolher opções" : "Mais opções"}
@@ -659,7 +664,7 @@ export function EditorDesenho() {
                 className="h-4 w-4 accent-red-500"
                 checked={elemento.preenchimento !== null}
                 onChange={(e) =>
-                  alterarElemento((el) => (el.tipo === "retangulo" ? { ...el, preenchimento: e.target.checked ? "#fde68a" : null } : el), "preencher")
+                  alterarElemento((el) => (el.tipo === "retangulo" ? { ...el, preenchimento: e.target.checked ? el.cor : null } : el), "preencher")
                 }
               />
               Preencher
@@ -741,6 +746,15 @@ export function EditorDesenho() {
         ancora={ancoraRef}
         expandido={expandido}
         principal={linhaPrincipal}
+        acoes={acoes}
+        minimizada={barraMinimizada}
+        aoAlternarMinimizada={() => {
+          if (!barraMinimizada) {
+            setFerramenta("selecionar");
+            setSelecaoArea(null);
+          }
+          setBarraMinimizada(!barraMinimizada);
+        }}
         expansao={expansao}
       />
 

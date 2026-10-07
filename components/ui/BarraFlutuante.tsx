@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode, type RefObject } from "react";
 import { Icone } from "./Icones";
+import { LinhaRolavel } from "./LinhaRolavel";
 
 type Posicao = { x: number; y: number };
 
@@ -10,8 +11,14 @@ type Props = {
   /** Elemento usado como referência para a posição inicial (a barra nasce no canto superior direito dele). */
   ancora?: RefObject<HTMLElement | null>;
   expandido: boolean;
+  /** Linha principal: rola na horizontal (com setas) quando não cabe. */
   principal: ReactNode;
+  /** Botões que ficam sempre visíveis ao lado da linha rolável (ex.: abrir/fechar as opções). */
+  acoes?: ReactNode;
   expansao: ReactNode;
+  /** Barra recolhida: só sobra um botão "Editar" para reabri-la. */
+  minimizada: boolean;
+  aoAlternarMinimizada: () => void;
 };
 
 const MARGEM = 8;
@@ -29,7 +36,7 @@ function limitar(posicao: Posicao, largura: number): Posicao {
  * Painel flutuante e arrastável (pela alça à esquerda), com uma linha principal sempre visível
  * e uma área que expande/recolhe com animação. Fica em `position: fixed`, então acompanha a rolagem.
  */
-export function BarraFlutuante({ rotulo, ancora, expandido, principal, expansao }: Props) {
+export function BarraFlutuante({ rotulo, ancora, expandido, principal, acoes, expansao, minimizada, aoAlternarMinimizada }: Props) {
   const barraRef = useRef<HTMLDivElement>(null);
   const [posicao, setPosicao] = useState<Posicao | null>(null);
   const arrasto = useRef<{ x: number; y: number; origem: Posicao } | null>(null);
@@ -53,6 +60,11 @@ export function BarraFlutuante({ rotulo, ancora, expandido, principal, expansao 
     window.addEventListener("resize", aoRedimensionar);
     return () => window.removeEventListener("resize", aoRedimensionar);
   }, []);
+
+  // Recolher/abrir muda a largura da barra: garante que continue inteira na janela.
+  useEffect(() => {
+    setPosicao((atual) => (atual ? limitar(atual, barraRef.current?.offsetWidth ?? 0) : atual));
+  }, [minimizada]);
 
   function iniciarArrasto(e: PointerEvent<HTMLButtonElement>) {
     if (!posicao) return;
@@ -88,15 +100,15 @@ export function BarraFlutuante({ rotulo, ancora, expandido, principal, expansao 
       ref={barraRef}
       role="toolbar"
       aria-label={rotulo}
-      className="fixed z-40 w-max max-w-[min(96vw,82rem)] rounded-[1.75rem] border border-white/10 bg-slate-900/95 p-1.5 text-slate-100 shadow-2xl ring-1 ring-black/30 backdrop-blur"
+      className="fixed z-40 w-max max-w-[min(96vw,46rem)] rounded-[1.75rem] border border-white/10 bg-slate-900/95 p-1.5 text-slate-100 shadow-2xl ring-1 ring-black/30 backdrop-blur"
       style={{ left: posicao?.x ?? 0, top: posicao?.y ?? 0, visibility: posicao ? "visible" : "hidden" }}
     >
-      <div className="flex flex-wrap items-center gap-1">
+      <div className="flex items-center gap-1">
         <button
           type="button"
           aria-label="Mover barra de ferramentas"
           title="Arraste para mover a barra"
-          className="cursor-grab touch-none rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-slate-100 active:cursor-grabbing"
+          className="shrink-0 cursor-grab touch-none rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-slate-100 active:cursor-grabbing"
           onPointerDown={iniciarArrasto}
           onPointerMove={arrastar}
           onPointerUp={soltar}
@@ -105,15 +117,42 @@ export function BarraFlutuante({ rotulo, ancora, expandido, principal, expansao 
         >
           <Icone.Arrastar />
         </button>
-        {principal}
+
+        {minimizada ? (
+          <button
+            type="button"
+            aria-label="Abrir ferramentas de edição"
+            title="Abrir as ferramentas de edição do desenho"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-[13px] font-medium text-slate-100 transition hover:bg-white/15"
+            onClick={aoAlternarMinimizada}
+          >
+            <Icone.Editar />
+            Editar
+          </button>
+        ) : (
+          <>
+            <div className="min-w-0 flex-1">
+              <LinhaRolavel rotulo="as ferramentas">{principal}</LinhaRolavel>
+            </div>
+            {acoes}
+            <button
+              type="button"
+              aria-label="Recolher barra"
+              title="Recolher a barra (fica só o botão Editar)"
+              className="shrink-0 rounded-full p-1.5 text-slate-400 hover:bg-white/10 hover:text-slate-100"
+              onClick={aoAlternarMinimizada}
+            >
+              <Icone.Minimizar />
+            </button>
+          </>
+        )}
       </div>
 
-      <div
-        className="grid transition-[grid-template-rows] duration-200 ease-out"
-        style={{ gridTemplateRows: expandido ? "1fr" : "0fr" }}
-      >
-        <div className="min-h-0 overflow-hidden">{expandido && expansao}</div>
-      </div>
+      {!minimizada && (
+        <div className="grid transition-[grid-template-rows] duration-200 ease-out" style={{ gridTemplateRows: expandido ? "1fr" : "0fr" }}>
+          <div className="min-h-0 overflow-hidden">{expandido && expansao}</div>
+        </div>
+      )}
     </div>
   );
 }

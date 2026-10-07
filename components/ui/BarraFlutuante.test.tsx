@@ -8,7 +8,7 @@ function barra() {
 }
 const posicao = () => ({ x: parseFloat(barra().style.left), y: parseFloat(barra().style.top) });
 
-function renderizar(props: { expandido?: boolean; ancora?: RefObject<HTMLElement | null> } = {}) {
+function renderizar(props: { expandido?: boolean; minimizada?: boolean; ancora?: RefObject<HTMLElement | null>; aoAlternar?: () => void } = {}) {
   return render(
     <BarraFlutuante
       rotulo="Minha barra"
@@ -16,6 +16,8 @@ function renderizar(props: { expandido?: boolean; ancora?: RefObject<HTMLElement
       expandido={props.expandido ?? false}
       principal={<button type="button">Principal</button>}
       expansao={<button type="button">Extra</button>}
+      minimizada={props.minimizada ?? false}
+      aoAlternarMinimizada={props.aoAlternar ?? (() => {})}
     />
   );
 }
@@ -32,7 +34,14 @@ describe("BarraFlutuante", () => {
     expect(screen.queryByRole("button", { name: "Extra" })).toBeNull();
 
     rerender(
-      <BarraFlutuante rotulo="Minha barra" expandido principal={<button type="button">Principal</button>} expansao={<button type="button">Extra</button>} />
+      <BarraFlutuante
+        rotulo="Minha barra"
+        expandido
+        principal={<button type="button">Principal</button>}
+        expansao={<button type="button">Extra</button>}
+        minimizada={false}
+        aoAlternarMinimizada={() => {}}
+      />
     );
     expect(screen.getByRole("button", { name: "Extra" })).toBeInTheDocument();
   });
@@ -96,5 +105,36 @@ describe("BarraFlutuante", () => {
     fireEvent(window, new Event("resize"));
     expect(posicao().x).toBeLessThanOrEqual(500 - 8);
     expect(posicao().y).toBeLessThanOrEqual(300 - 56);
+  });
+
+  it("recolher mostra só o botão Editar, que reabre a barra", () => {
+    const aoAlternar = vi.fn();
+    const { rerender } = renderizar({ expandido: true, aoAlternar });
+    fireEvent.click(screen.getByRole("button", { name: "Recolher barra" }));
+    expect(aoAlternar).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <BarraFlutuante
+        rotulo="Minha barra"
+        expandido
+        principal={<button type="button">Principal</button>}
+        expansao={<button type="button">Extra</button>}
+        minimizada
+        aoAlternarMinimizada={aoAlternar}
+      />
+    );
+    expect(screen.queryByRole("button", { name: "Principal" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Extra" })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Abrir ferramentas de edição" }));
+    expect(aoAlternar).toHaveBeenCalledTimes(2);
+  });
+
+  it("mostra setas de rolagem só quando a linha principal não cabe", () => {
+    const larg = vi.spyOn(HTMLElement.prototype, "scrollWidth", "get").mockReturnValue(900);
+    const cli = vi.spyOn(HTMLElement.prototype, "clientWidth", "get").mockReturnValue(400);
+    renderizar();
+    expect(screen.getByRole("button", { name: /Rolar .* para a direita/ })).toBeInTheDocument();
+    larg.mockRestore();
+    cli.mockRestore();
   });
 });
