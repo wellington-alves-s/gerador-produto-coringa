@@ -88,99 +88,6 @@ const ESTILO_GRADE_DESENHO = {
   backgroundSize: "20px 20px",
 };
 
-function ReguaHorizontal({ texto }: { texto: string }) {
-  // Tudo em SVG (setas, linhas e texto), assim como a régua vertical — o
-  // html2canvas não alinha bem uma linha flex com ícones de seta e texto de
-  // alturas diferentes (setas e texto saíam desalinhados só na exportação).
-  // Coordenadas absolutas de SVG não dependem de alinhamento flex nenhum.
-  const larguraTexto = texto.length * 8 + 12;
-  const comprimentoLinha = 24;
-  const margemSeta = 10;
-  const largura = margemSeta * 2 + comprimentoLinha * 2 + larguraTexto;
-  const meioY = 9;
-  const xLinhaEsqIni = margemSeta;
-  const xLinhaEsqFim = xLinhaEsqIni + comprimentoLinha;
-  const xLinhaDirIni = xLinhaEsqFim + larguraTexto;
-  const xLinhaDirFim = xLinhaDirIni + comprimentoLinha;
-  return (
-    <svg width={largura} height="18" viewBox={`0 0 ${largura} 18`}>
-      <path
-        d={`M${margemSeta} ${meioY - 5} L0 ${meioY} L${margemSeta} ${meioY + 5}`}
-        fill="none"
-        stroke="#4b5563"
-        strokeWidth="1.5"
-      />
-      <line x1={xLinhaEsqIni} y1={meioY} x2={xLinhaEsqFim} y2={meioY} stroke="#9ca3af" strokeWidth="1" />
-      <text
-        x={largura / 2}
-        y={meioY}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        fontSize="14"
-        fontWeight="bold"
-        fontFamily="sans-serif"
-        fill="#4b5563"
-      >
-        {texto}
-      </text>
-      <line x1={xLinhaDirIni} y1={meioY} x2={xLinhaDirFim} y2={meioY} stroke="#9ca3af" strokeWidth="1" />
-      <path
-        d={`M${xLinhaDirFim} ${meioY - 5} L${largura} ${meioY} L${xLinhaDirFim} ${meioY + 5}`}
-        fill="none"
-        stroke="#4b5563"
-        strokeWidth="1.5"
-      />
-    </svg>
-  );
-}
-
-function ReguaVertical({ texto }: { texto: string }) {
-  // Tudo em SVG (setas, linhas e texto), igual a régua horizontal — assim as
-  // duas ficam com o mesmo estilo de seta (linha fina em V, não o caractere
-  // de seta do teclado) e nenhuma das duas depende de alinhamento flex ou de
-  // position:absolute pra funcionar certo na exportação.
-  const comprimentoTexto = texto.length * 8 + 12;
-  const comprimentoLinha = 24;
-  const margemSeta = 10;
-  const altura = margemSeta * 2 + comprimentoLinha * 2 + comprimentoTexto;
-  const meioX = 9;
-  const yLinhaSupIni = margemSeta;
-  const yLinhaSupFim = yLinhaSupIni + comprimentoLinha;
-  const yLinhaInfIni = yLinhaSupFim + comprimentoTexto;
-  const yLinhaInfFim = yLinhaInfIni + comprimentoLinha;
-  return (
-    <svg width="18" height={altura} viewBox={`0 0 18 ${altura}`}>
-      <path
-        d={`M${meioX - 5} ${margemSeta} L${meioX} 0 L${meioX + 5} ${margemSeta}`}
-        fill="none"
-        stroke="#4b5563"
-        strokeWidth="1.5"
-      />
-      <line x1={meioX} y1={yLinhaSupIni} x2={meioX} y2={yLinhaSupFim} stroke="#9ca3af" strokeWidth="1" />
-      <text
-        x={meioX}
-        y={altura / 2}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        transform={`rotate(90 ${meioX} ${altura / 2})`}
-        fontSize="14"
-        fontWeight="bold"
-        fontFamily="sans-serif"
-        fill="#4b5563"
-      >
-        {texto}
-      </text>
-      <line x1={meioX} y1={yLinhaInfIni} x2={meioX} y2={yLinhaInfFim} stroke="#9ca3af" strokeWidth="1" />
-      <path
-        d={`M${meioX - 5} ${yLinhaInfFim} L${meioX} ${altura} L${meioX + 5} ${yLinhaInfFim}`}
-        fill="none"
-        stroke="#4b5563"
-        strokeWidth="1.5"
-      />
-    </svg>
-  );
-}
-
 function textoRegua(
   config: ConfigProduto,
   idCampo: string | undefined,
@@ -310,40 +217,22 @@ export function DocumentoCroqui({ estado, camadaEdicao }: Props) {
               caixa pode esticar livremente sem risco de a foto virar gigante —
               limitar a caixa aqui só deixava sobrando espaço em branco abaixo
               dela quando havia mais altura disponível que o teto permitia. */}
-          <div className="flex min-h-[220px] flex-1">
-            <div
-              className="flex flex-1 flex-col border border-[#9ca3af] p-4"
-              style={imagemSrc ? undefined : ESTILO_GRADE_DESENHO}
-            >
-              {/* Régua da largura em fluxo normal (não position:absolute) — o
-                  html2canvas não respeita "right"/calc() em elementos
-                  posicionados de forma absoluta, então ela sempre colapsava
-                  pra esquerda só na exportação. Em fluxo normal, justify-center
-                  centraliza de verdade nos dois lugares. */}
-              {textoLargura && (
-                <div className="mb-2 flex justify-center">
-                  <ReguaHorizontal texto={textoLargura} />
-                </div>
-              )}
-              <div className="flex flex-1 items-center">
-                <div className="min-w-0 flex-1">
-                  <AreaDesenho
-                    imagemSrc={imagemSrc}
-                    desenho={estado.desenho ?? DESENHO_INICIAL}
-                    camadaEdicao={camadaEdicao}
-                  />
-                </div>
-                {/* Régua da altura também em fluxo normal, do lado da imagem —
-                    mesmo motivo da régua da largura: position:absolute com
-                    "right"/"bottom" não é respeitado pelo html2canvas. */}
-                {textoAltura && (
-                  <div className="ml-2 flex items-center self-stretch">
-                    <ReguaVertical texto={textoAltura} />
-                  </div>
-                )}
-              </div>
+          <div className="flex">
+            {/* O quadro editável É a moldura (proporção fixa, sem margem interna): dá para posicionar
+                itens em qualquer ponto dela, inclusive sob as réguas, que são desenhadas por cima. */}
+            <div className="flex flex-1 flex-col border border-[#9ca3af]" style={imagemSrc ? undefined : ESTILO_GRADE_DESENHO}>
+              <AreaDesenho
+                imagemSrc={imagemSrc}
+                desenho={estado.desenho ?? DESENHO_INICIAL}
+                textoLargura={textoLargura}
+                textoAltura={textoAltura}
+                camadaEdicao={camadaEdicao}
+              />
             </div>
           </div>
+
+          {/* Se a coluna da esquerda for mais alta, a folga fica aqui e o box de compras segue no rodapé. */}
+          <div className="flex-1" />
 
           {estado.pedido.notaAdicional && (
             <p className="mt-2 border border-[#d1d5db] p-2 text-sm break-words whitespace-pre-wrap">

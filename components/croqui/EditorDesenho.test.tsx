@@ -463,7 +463,7 @@ describe("EditorDesenho — imagem do produto", () => {
     fireEvent.pointerDown(hitImagem, ponteiro(500, 400));
     fireEvent.pointerUp(camadaEdicao(), ponteiro(500, 400));
     fireEvent.keyDown(window, { key: "ArrowUp", shiftKey: true });
-    expect(desenhoPersistido().imagem.cy).toBe(380);
+    expect(desenhoPersistido().imagem.cy).toBe(555);
   });
 });
 

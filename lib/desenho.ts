@@ -7,7 +7,11 @@
  */
 
 export const LARGURA_DESENHO = 1000;
-export const ALTURA_DESENHO = 800;
+/**
+ * Proporção fixa do quadro (a própria moldura do "Desenho da peça especial"). Fixa para que a tela de
+ * Revisão e o arquivo exportado fiquem idênticos; ~0,87 é a proporção que a moldura já tinha no PDF.
+ */
+export const ALTURA_DESENHO = 1150;
 export const TAMANHO_MINIMO = 6;
 
 export type Ponto = { x: number; y: number };
@@ -278,11 +282,12 @@ export function atualizarTexto(texto: ElementoTexto, alteracoes: Partial<Pick<El
 
 // ---------- imagem do produto ----------
 
-const AREA_PADRAO_IMAGEM = { largura: LARGURA_DESENHO * 0.9, altura: ALTURA_DESENHO * 0.9 };
+const MARGEM_PADRAO_IMAGEM = 0.9;
 
 /** Imagem ajustada ao quadro (contain), centralizada, respeitando a proporção original. */
 export function transformacaoPadraoDaImagem(proporcao?: number): Transformacao {
-  let { largura, altura } = AREA_PADRAO_IMAGEM;
+  let largura = LARGURA_DESENHO * MARGEM_PADRAO_IMAGEM;
+  let altura = ALTURA_DESENHO * MARGEM_PADRAO_IMAGEM;
   if (proporcao && proporcao > 0) {
     if (proporcao > largura / altura) altura = largura / proporcao;
     else largura = altura * proporcao;

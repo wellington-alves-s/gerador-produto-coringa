@@ -102,12 +102,12 @@ export function OverlayEdicao({
   const editando = ferramenta === "selecionar";
 
   function ponto(e: { clientX: number; clientY: number }): Ponto {
+    // A escala é sempre pela largura (x e y na mesma unidade); a moldura pode ser mais alta que o quadro 5:4.
     const caixa = svgRef.current?.getBoundingClientRect();
-    const largura = caixa?.width || LARGURA_DESENHO;
-    const altura = caixa?.height || ALTURA_DESENHO;
+    const pxPorUnidade = (caixa?.width || LARGURA_DESENHO) / LARGURA_DESENHO;
     return {
-      x: ((e.clientX - (caixa?.left ?? 0)) / largura) * LARGURA_DESENHO,
-      y: ((e.clientY - (caixa?.top ?? 0)) / altura) * ALTURA_DESENHO,
+      x: (e.clientX - (caixa?.left ?? 0)) / pxPorUnidade,
+      y: (e.clientY - (caixa?.top ?? 0)) / pxPorUnidade,
     };
   }
 
@@ -396,6 +396,7 @@ export function OverlayEdicao({
       ref={svgRef}
       data-testid="camada-edicao"
       viewBox={`0 0 ${LARGURA_DESENHO} ${ALTURA_DESENHO}`}
+      preserveAspectRatio="xMinYMin meet"
       style={{
         position: "absolute",
         left: 0,
@@ -411,7 +412,8 @@ export function OverlayEdicao({
       onPointerUp={aoSoltar}
       onPointerCancel={aoSoltar}
     >
-      <rect data-fundo-edicao width={LARGURA_DESENHO} height={ALTURA_DESENHO} fill="transparent" onPointerDown={aoPressionarFundo} />
+      {/* Cobre toda a moldura, mesmo além do quadro 5:4 (a moldura pode ser mais alta). */}
+      <rect data-fundo-edicao x={-LARGURA_DESENHO} y={-LARGURA_DESENHO} width={LARGURA_DESENHO * 3} height={LARGURA_DESENHO * 4} fill="transparent" onPointerDown={aoPressionarFundo} />
 
       <g transform={transformacaoSvg(imagem)} data-clique="imagem">
         <rect

@@ -228,6 +228,11 @@ describe("imagem do produto", () => {
     expect(alta.altura).toBeLessThanOrEqual(ALTURA_DESENHO);
     expect(alta).toMatchObject({ cx: LARGURA_DESENHO / 2, cy: ALTURA_DESENHO / 2, rotacao: 0 });
   });
+
+  it("o quadro cobre toda a moldura: o centro dos itens vai de 0 até a altura inteira", () => {
+    expect(moverPor(caixa({ cy: 1000 }), 0, 300).cy).toBe(ALTURA_DESENHO);
+    expect(moverPor(caixa({ cy: 100 }), 0, -300).cy).toBe(0);
+  });
 });
 
 describe("camadas", () => {

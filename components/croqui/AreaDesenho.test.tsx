@@ -14,8 +14,27 @@ describe("AreaDesenho", () => {
     const imagem = { ...transformacaoPadraoDaImagem(), cx: 500, cy: 400, largura: 500, altura: 400, rotacao: 30, espelhoH: true };
     render(<AreaDesenho imagemSrc="/x.jpg" desenho={{ elementos: [], imagem }} />);
     const img = screen.getByAltText("Desenho do produto");
-    expect(img).toHaveStyle({ left: "25%", top: "25%", width: "50%", height: "50%" });
+    // x e y em % da LARGURA (margin-top em % também é relativo à largura); a altura vem da proporção.
+    expect(img).toHaveStyle({ left: "25%", marginTop: "20%", width: "50%", aspectRatio: "500 / 400" });
     expect(img.style.transform).toBe("rotate(30deg) scale(-1, 1)");
+  });
+
+  it("o quadro tem proporção fixa (a mesma na tela e na exportação) e ocupa toda a largura", () => {
+    render(<AreaDesenho imagemSrc={null} desenho={DESENHO_INICIAL} />);
+    expect(screen.getByTestId("area-desenho")).toHaveStyle({ width: "100%", aspectRatio: "1000 / 1150" });
+  });
+
+  it("a camada de anotações escala pela largura e fica ancorada no topo à esquerda", () => {
+    render(<AreaDesenho imagemSrc={null} desenho={DESENHO_INICIAL} />);
+    expect(screen.getByTestId("camada-elementos")).toHaveAttribute("preserveAspectRatio", "xMinYMin meet");
+  });
+
+  it("desenha as réguas dentro do quadro, e só as que têm medida", () => {
+    const { rerender } = render(<AreaDesenho imagemSrc={null} desenho={DESENHO_INICIAL} textoLargura="1,200 m Largura" textoAltura="2,100 m Altura" />);
+    expect(screen.getByText("1,200 m Largura")).toBeInTheDocument();
+    expect(screen.getByText("2,100 m Altura")).toBeInTheDocument();
+    rerender(<AreaDesenho imagemSrc={null} desenho={DESENHO_INICIAL} textoLargura="1,200 m Largura" textoAltura={null} />);
+    expect(screen.queryByText("2,100 m Altura")).toBeNull();
   });
 
   it("sem posição salva, ajusta a imagem ao quadro (90%)", () => {
