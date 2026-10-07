@@ -50,7 +50,7 @@ Este documento cobre **apenas a primeira entrega**: reescrever o fluxo atual com
 ```
 
 - Nenhum backend: o servidor do Next.js só serve os arquivos estáticos/JS, sem rota de API que armazene dado nenhum.
-- Biblioteca de imagens = arquivos dentro do próprio repositório (`public/biblioteca/produtos/...`) + manifesto (`public/biblioteca.json`). Adicionar uma imagem = adicionar arquivo + linha no manifesto + `git push` (a Vercel republica sozinha).
+- Biblioteca de imagens = arquivos dentro do próprio repositório (`public/biblioteca/produtos/...`) + manifesto (`lib/biblioteca-dados.ts`). Adicionar uma imagem = adicionar arquivo + linha no manifesto + `git push` (a Vercel republica sozinha).
 - Imagem avulsa de uma geração específica nunca sai do navegador (mantida via `URL.createObjectURL`/base64 em memória e no rascunho local).
 - Rascunho do formulário: espelhado em `localStorage` a cada mudança.
 - Geração do documento: 100% no navegador (`html2canvas` + `jsPDF`), sem chamada a servidor.
@@ -98,10 +98,10 @@ produto-coringa/
 │
 ├── public/
 │   ├── biblioteca/produtos/...     fotos da biblioteca (adicionadas via git)
-│   ├── biblioteca.json             manifesto: id, nome, categoria, arquivo
-│   ├── madel-logo.png / madel-selo.png
+│   └── marca/                      logo-madel.png / selo-qualidade.png
 │
-├── package.json / tsconfig.json / tailwind.config.ts
+├── lib/biblioteca-dados.ts         manifesto: id, nome, categoria, arquivo
+├── package.json / tsconfig.json (Tailwind v4: sem tailwind.config)
 ```
 
 ## 5. O motor de produtos
@@ -112,7 +112,7 @@ Cada tipo é um arquivo de configuração TypeScript que descreve seus campos, e
 // produtos/tipos.ts
 type CampoBase = { id: string; label: string; obrigatorio?: boolean };
 type Campo =
-  | (CampoBase & { tipo: "medida"; unidade: "m" | "mm" })
+  | (CampoBase & { tipo: "medida"; unidade: "m" | "mm" | "cm"; casasDecimais?: number; casasInteiras?: number })
   | (CampoBase & { tipo: "texto" })
   | (CampoBase & { tipo: "opcao-unica"; opcoes: string[] })
   | (CampoBase & { tipo: "multipla-escolha"; opcoes: string[] });
@@ -128,6 +128,14 @@ type ConfigProduto = {
 Essa lista de campos alimenta três coisas ao mesmo tempo: o formulário da Etapa 3 (renderizado genericamente, sem componente feito à mão por tipo), a validação (`obrigatorio`) e a seção de especificações do documento impresso, na mesma ordem declarada.
 
 ### 5.1 Configuração de cada tipo
+
+> **Fonte da verdade: `produtos/*.ts`.** As tabelas abaixo são o desenho inicial e já divergem do código. Principais diferenças atuais:
+> - Campos de medida aceitam `cm`, `casasDecimais` e `casasInteiras`; caixa do batente, espessura da folha e medidas de guarnição são em cm (1 casa decimal) nas portas especial/ACM e na esquadria.
+> - Campos têm `linha` (lado a lado no documento), `dependeDe` (obrigatório só quando outro campo tem certo valor), `exibirApenasSelecionadas` e `ocultarLabelDocumento`.
+> - Porta Marcenaria: madeira e espessura (35MM/45MM) são obrigatórias; `ladoMaçaneta` é `ladoMacaneta`; `profundidadeFriso` é em cm.
+> - Porta Especial: sem `tipoFriso`/`modeloFriso`; `padraoMadeira` e `espessuraFolha` obrigatórios; abertura e lado são opção única (GIRO/PIVOTANTE/CAMARÃO e ESQUERDO/DIREITO/CENTRAL), exigidos só quando Tipo é CONJUNTO.
+> - Esquadria: tem `categoria` (múltipla escolha com grupo excludente), `formatoEsquadria` (em vez de `formatoPalheta`), `tipoPalheta`, `acabamentoFerragem` e opções de abertura em opção única; `vidros` depende de `categoria`.
+> - Régua do desenho: `campoLargura`/`campoAltura` (e rótulos) definem os campos usados; no Degrau/Patamar/Rodapé a horizontal mostra Comprimento e a vertical Largura.
 
 **`porta-marcenaria`** — "Porta Marcenaria Madel" — título do documento `ENCOMENDA ESPECIAL PORTAS` — prazo **60 dias**
 
@@ -207,7 +215,7 @@ Essa lista de campos alimenta três coisas ao mesmo tempo: o formulário da Etap
 
 **`outros`** — "Outros" — título `ENCOMENDA ESPECIAL` — prazo **60 dias** (assumido)
 
-Sem `campos` estruturados. A Etapa 3 é pulada; a "Descrição do Produto" já digitada na Etapa 2 é o único conteúdo técnico impresso.
+Campos opcionais: Detalhes (texto), Altura e Largura (medida, m). A Etapa 3 é exibida e pode ser avançada sem preencher nada; Altura e Largura, quando preenchidas, alimentam as réguas do desenho.
 
 > Nota: os prazos de 60/90 dias e os títulos de "Degrau/Patamar/Rodapé" e "Outros" foram inferidos por analogia aos formulários enviados (que não cobrem esses dois tipos). Vale confirmar na prática antes ou logo depois da primeira entrega.
 
@@ -215,7 +223,7 @@ Sem `campos` estruturados. A Etapa 3 é pulada; a "Descrição do Produto" já d
 
 - Cada etapa é uma rota própria (`/criar/tipo`, `/criar/pedido`, ...), com um `WizardContext` (React Context) guardando o estado inteiro do pedido em andamento.
 - Etapa 2 (Pedido) coleta: Cliente, Nº Pedido, Data, Vendedor, Loja, Descrição do Produto — comuns a todos os tipos.
-- Etapa 3 (Especificações) é gerada dinamicamente a partir de `campos` do tipo escolhido (pulada para "Outros").
+- Etapa 3 (Especificações) é gerada dinamicamente a partir de `campos` do tipo escolhido (para "Outros" todos os campos são opcionais).
 - Etapa 4 (Imagem): biblioteca (grade + busca, lida do manifesto estático) ou upload avulso (comprimido no navegador, ver seção 7).
 - Etapa 5 (Revisão): mostra tudo, incluindo o preview do `DocumentoCroqui`, e tem uma seção opcional "Informações de compra" com **Fornecedor** e **Custo** (ambos opcionais).
 - Tela de Resultado: exibe o documento final e os botões **Baixar PDF** / **Baixar Imagem**.
@@ -230,7 +238,7 @@ Sem `campos` estruturados. A Etapa 3 é pulada; a "Descrição do Produto" já d
 
 ## 7. Biblioteca de imagens e upload avulso
 
-- `public/biblioteca.json`: lista de `{ id, nome, categoria, arquivo }`. Lido em build time (import direto, sem fetch).
+- `lib/biblioteca-dados.ts`: lista de `{ id, nome, categoria, arquivo }` (tipo em `lib/biblioteca-tipos.ts`). Lido em build time (import direto, sem fetch).
 - Etapa 4 reproduz a UX de busca + grade da `biblioteca_imagens.php` atual, mas embutida no wizard (sem popup).
 - Migração: as imagens hoje em `uploads/` são movidas para `public/biblioteca/produtos/` e o manifesto inicial é gerado a partir delas, como parte da implementação (não faz parte do desenho da arquitetura em si).
 - Upload avulso: ao escolher um arquivo, ele é redimensionado/comprimido no navegador (canvas, ~1600px de largura, JPEG) antes de ser usado — mantém o export leve e permite guardar essa imagem como parte do rascunho em `localStorage` sem estourar a cota de armazenamento do navegador.
