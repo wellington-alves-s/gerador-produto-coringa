@@ -132,4 +132,29 @@ describe("Meus croquis", () => {
     render(<PaginaMeusCroquis />);
     expect(await screen.findByText(/Não foi possível carregar/)).toBeInTheDocument();
   });
+
+  it("Duplicar cria a cópia, recarrega a lista e mostra o nome da cópia", async () => {
+    fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
+      if (url === "/api/croquis/10/duplicar" && init?.method === "POST") return json({ id: 20, cliente: "José Álvares (2)" });
+      if (url.startsWith("/api/croquis?")) return json({ itens: [item(10, "José Álvares")], total: 1 });
+      return json({});
+    });
+    render(<PaginaMeusCroquis />);
+    const listasAntes = () => fetchMock.mock.calls.filter(([u]) => String(u).startsWith("/api/croquis?")).length;
+    await userEvent.click(await screen.findByRole("button", { name: "Duplicar" }));
+    expect(fetchMock).toHaveBeenCalledWith("/api/croquis/10/duplicar", expect.objectContaining({ method: "POST" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("José Álvares (2)");
+    await waitFor(() => expect(listasAntes()).toBeGreaterThanOrEqual(2));
+  });
+
+  it("falha ao duplicar mostra mensagem e não mexe na lista", async () => {
+    fetchMock.mockImplementation(async (url: string, init?: { method?: string }) =>
+      init?.method === "POST" ? json({}, false) : json({ itens: [item(10, "José Álvares")], total: 1 })
+    );
+    render(<PaginaMeusCroquis />);
+    await userEvent.click(await screen.findByRole("button", { name: "Duplicar" }));
+    expect(await screen.findByText(/Não foi possível duplicar/)).toBeInTheDocument();
+    expect(screen.getByText("José Álvares")).toBeInTheDocument();
+  });
 });
+

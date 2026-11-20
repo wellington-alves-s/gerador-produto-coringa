@@ -10,6 +10,7 @@ const push = vi.fn();
 const replace = vi.fn();
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, replace }),
+  usePathname: () => "/criar/tipo",
 }));
 
 beforeEach(() => {

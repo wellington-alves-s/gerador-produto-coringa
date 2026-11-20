@@ -1,10 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useWizard } from "@/lib/wizard-context";
+import { useEffect, useState } from "react";
 import { useUsuario } from "@/lib/usuario-cliente";
-import { ESTADO_INICIAL } from "@/lib/pedido";
+import { useAbrirCroqui } from "@/lib/abrir-croqui";
 import { PRODUTOS } from "@/produtos";
 
 type Item = {
@@ -20,9 +18,8 @@ const POR_PAGINA = 20;
 const MENSAGEM_ERRO_LISTA = "Não foi possível carregar os croquis. Tente novamente.";
 
 export default function PaginaMeusCroquis() {
-  const { estado, dispatch } = useWizard();
   const { usuario } = useUsuario();
-  const router = useRouter();
+  const { abrir: abrirCroqui } = useAbrirCroqui();
   const admin = usuario?.admin === true;
 
   const [busca, setBusca] = useState("");
@@ -33,7 +30,8 @@ export default function PaginaMeusCroquis() {
   const [itens, setItens] = useState<Item[]>([]);
   const [total, setTotal] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
-  const destino = useRef<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
+  const [recarregar, setRecarregar] = useState(0);
 
   // Atraso na busca para não chamar o servidor a cada tecla.
   useEffect(() => {
@@ -60,7 +58,7 @@ export default function PaginaMeusCroquis() {
     return () => {
       ativo = false;
     };
-  }, [termo, pagina, vendedor, admin]);
+  }, [termo, pagina, vendedor, admin, recarregar]);
 
   useEffect(() => {
     if (!admin) return;
@@ -70,28 +68,24 @@ export default function PaginaMeusCroquis() {
       .catch(() => {});
   }, [admin]);
 
-  // Só navega depois que o estado carregado foi aplicado.
-  useEffect(() => {
-    if (!destino.current) return;
-    router.push(destino.current);
-    destino.current = null;
-  }, [estado, router]);
-
   async function abrir(item: Item) {
     setErro(null);
+    setAviso(null);
+    if (!(await abrirCroqui(item.id))) setErro("Não foi possível abrir o croqui. Tente novamente.");
+  }
+
+  async function duplicar(item: Item) {
+    setErro(null);
+    setAviso(null);
     try {
-      const r = await fetch(`/api/croquis/${item.id}`);
+      const r = await fetch(`/api/croquis/${item.id}/duplicar`, { method: "POST" });
       if (!r.ok) throw new Error("falha");
-      const dados = await r.json();
-      // Croqui de outro vendedor (admin) abre como cópia: salvar não sobrescreve o original.
-      const proprio = dados.usuarioId === usuario?.id;
-      destino.current = "/criar/revisao";
-      dispatch({
-        type: "CARREGAR_ESTADO",
-        estado: { ...ESTADO_INICIAL, ...dados.estado, croquiId: proprio ? dados.id : null, ultimaEtapa: "revisao" },
-      });
+      const copia = await r.json();
+      setAviso(`Cópia criada: ${copia.cliente}`);
+      setPagina(1);
+      setRecarregar((v) => v + 1);
     } catch {
-      setErro("Não foi possível abrir o croqui. Tente novamente.");
+      setErro("Não foi possível duplicar o croqui. Tente novamente.");
     }
   }
 
@@ -147,6 +141,11 @@ export default function PaginaMeusCroquis() {
         )}
       </div>
 
+      {aviso && (
+        <p role="status" className="mb-4 text-sm text-green-700 dark:text-green-400">
+          {aviso}
+        </p>
+      )}
       {erro && (
         <p role="alert" className="mb-4 text-sm text-red-700 dark:text-red-400">
           {erro}
@@ -179,6 +178,9 @@ export default function PaginaMeusCroquis() {
                   <td className="flex gap-2 py-2">
                     <button type="button" onClick={() => abrir(item)} className="rounded-md bg-red-700 px-3 py-1 text-white dark:bg-red-600">
                       Abrir
+                    </button>
+                    <button type="button" onClick={() => duplicar(item)} className={botao}>
+                      Duplicar
                     </button>
                     <button type="button" onClick={() => excluir(item)} className={botao}>
                       Excluir

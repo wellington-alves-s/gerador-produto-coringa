@@ -124,3 +124,32 @@ export async function excluirCroqui(u: UsuarioSessao, id: number): Promise<boole
   );
   return linhas.length > 0;
 }
+
+const escaparLike = (t: string) => t.replace(/[\\%_]/g, "\\$&");
+const escaparRegex = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/**
+ * Cria uma cópia do croqui na lista de `u`, com o nome numerado como cópia de arquivo
+ * ("Fulano (2)", "Fulano (3)"...), sem alterar o original. O admin pode duplicar o croqui de um
+ * vendedor: a cópia fica com o admin.
+ */
+export async function duplicarCroqui(u: UsuarioSessao, id: number): Promise<{ id: number; cliente: string } | null> {
+  const original = await obterCroqui(u, id);
+  if (!original) return null;
+  const estado = original.estado as { pedido?: Record<string, unknown> };
+  const base = texto(estado.pedido?.cliente).replace(/ \(\d+\)$/, "");
+
+  const existentes = await consultar<{ cliente: string }>(
+    "SELECT cliente FROM croquis WHERE usuario_id = $1 AND (cliente = $2 OR cliente LIKE $3)",
+    [u.id, base, `${escaparLike(base)} (%)`]
+  );
+  const copia = new RegExp(`^${escaparRegex(base)} \\((\\d+)\\)$`);
+  const maior = existentes.reduce((m, l) => Math.max(m, l.cliente === base ? 1 : Number(copia.exec(l.cliente)?.[1] ?? 0)), 1);
+  const sufixo = ` (${maior + 1})`;
+  const cliente = base.slice(0, LIMITE_TEXTO - sufixo.length) + sufixo;
+
+  const salvo = await salvarCroqui(u, {
+    estado: { ...estado, croquiId: null, pedido: { ...estado.pedido, cliente } },
+  });
+  return salvo ? { id: salvo.id, cliente } : null;
+}

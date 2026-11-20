@@ -6,6 +6,7 @@ import { cookieDeSessao } from "@/lib/servidor/sessao-teste";
 import { criarUsuario, definirAtivo } from "@/lib/servidor/usuarios";
 import { GET as listar, POST as salvar } from "./route";
 import { DELETE as excluir, GET as obter } from "./[id]/route";
+import { POST as duplicar } from "./[id]/duplicar/route";
 
 let cookieAna = "";
 let cookieBia = "";
@@ -82,5 +83,29 @@ describe("/api/croquis", () => {
 
   it("id da URL inválido: 404", async () => {
     expect((await obter(req("http://localhost/api/croquis/abc"), comId("abc"))).status).toBe(404);
+  });
+});
+
+describe("POST /api/croquis/:id/duplicar", () => {
+  const chamarDuplicar = (id: number | string, cookie: string | null = cookieAna) =>
+    duplicar(req(`http://localhost/api/croquis/${id}/duplicar`, cookie, "POST"), comId(id));
+
+  it("cria a cópia numerada e devolve id e nome", async () => {
+    const { id } = await (await post({ estado: estado("Maria") })).json();
+    const r = await chamarDuplicar(id);
+    expect(r.status).toBe(200);
+    const copia = await r.json();
+    expect(copia.cliente).toBe("Maria (2)");
+    expect(copia.id).not.toBe(id);
+    const lista = await (await listar(req("http://localhost/api/croquis"))).json();
+    expect(lista.total).toBe(2);
+  });
+
+  it("sem sessão: 401; croqui de outro vendedor ou inexistente: 404", async () => {
+    const { id } = await (await post({ estado: estado("Da Ana") })).json();
+    expect((await chamarDuplicar(id, null)).status).toBe(401);
+    expect((await chamarDuplicar(id, cookieBia)).status).toBe(404);
+    expect((await chamarDuplicar(999)).status).toBe(404);
+    expect((await chamarDuplicar("abc")).status).toBe(404);
   });
 });

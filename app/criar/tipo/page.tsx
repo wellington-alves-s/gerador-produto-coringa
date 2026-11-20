@@ -6,6 +6,7 @@ import { useWizard } from "@/lib/wizard-context";
 import { listarProdutos } from "@/produtos";
 import type { TipoProdutoId } from "@/produtos/tipos";
 import { StepIndicator } from "@/components/wizard/StepIndicator";
+import { ContinuarCroqui } from "@/components/wizard/ContinuarCroqui";
 
 export default function EtapaTipo() {
   const { estado, dispatch } = useWizard();
@@ -66,6 +67,8 @@ export default function EtapaTipo() {
           Próximo →
         </button>
       </div>
+
+      <ContinuarCroqui />
     </div>
   );
 }

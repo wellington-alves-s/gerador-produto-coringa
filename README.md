@@ -51,7 +51,7 @@ A rota exige login (veja a seção abaixo).
 
 ## Login, croquis salvos e painel do admin
 
-Cada vendedor entra com usuário e senha, e o croqui é salvo automaticamente a cada **Próximo** (a partir do passo Pedido, quando o cliente já foi informado). Em **Meus croquis** (`/criar/croquis`) ele busca por cliente, reabre na Revisão e exclui; cada vendedor vê só os seus. O admin (`/admin`) cria contas, troca senhas, desativa vendedores, vê os croquis de todos e configura a limpeza automática. Não há autocadastro nem "esqueci a senha".
+Cada vendedor entra com usuário e senha, e o croqui é salvo automaticamente a cada **Próximo** (a partir do passo Pedido, quando o cliente já foi informado). Em **Meus croquis** (`/criar/croquis`) ele busca por cliente, reabre na Revisão, **duplica** (cria uma cópia numerada, como "Cliente (2)") e exclui; cada vendedor vê só os seus. Ao abrir o sistema sem croqui em andamento, uma caixa discreta embaixo da tela de tipo pergunta "Continuar?" (Sim retoma o último croqui salvo de onde parou; Ignorar ou seguir em frente começa do zero). O admin (`/admin`) cria contas, troca senhas, desativa vendedores, vê os croquis de todos e configura a limpeza automática. Não há autocadastro nem "esqueci a senha".
 
 **Preparação (uma vez)**
 

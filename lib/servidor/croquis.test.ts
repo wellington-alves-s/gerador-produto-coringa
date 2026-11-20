@@ -5,7 +5,7 @@ import { consultar, definirConsulta } from "./banco";
 import { ErroValidacao } from "./erros";
 import { criarUsuario } from "./usuarios";
 import type { UsuarioSessao } from "./sessao";
-import { excluirCroqui, listarCroquis, normalizarBusca, obterCroqui, salvarCroqui } from "./croquis";
+import { duplicarCroqui, excluirCroqui, listarCroquis, normalizarBusca, obterCroqui, salvarCroqui } from "./croquis";
 
 let ana: UsuarioSessao;
 let bia: UsuarioSessao;
@@ -102,5 +102,57 @@ describe("croquis", () => {
     await expect(salvarCroqui(ana, { estado: "texto" })).rejects.toBeInstanceOf(ErroValidacao);
     const grande = { ...estadoDe("X"), lixo: "a".repeat(4_000_001) };
     await expect(salvarCroqui(ana, { estado: grande })).rejects.toMatchObject({ status: 413 });
+  });
+});
+
+describe("duplicarCroqui", () => {
+  const nomes = async (u: UsuarioSessao) => (await listarCroquis(u, {})).itens.map((i) => i.cliente).sort();
+
+  it("cria uma cópia com o nome numerado, como cópia de arquivo, sem mexer no original", async () => {
+    await salvarCroqui(ana, { estado: { ...estadoDe("VITOR ALBERTO DE TRENTIN - 12523"), especificacoes: { altura: "2100" }, croquiId: 1 } });
+    const copia = await duplicarCroqui(ana, 1);
+    expect(copia).toMatchObject({ cliente: "VITOR ALBERTO DE TRENTIN - 12523 (2)" });
+    expect(await nomes(ana)).toEqual(["VITOR ALBERTO DE TRENTIN - 12523", "VITOR ALBERTO DE TRENTIN - 12523 (2)"]);
+
+    const aberta = await obterCroqui(ana, copia!.id);
+    expect(aberta?.estado).toMatchObject({
+      tipo: "esquadria",
+      especificacoes: { altura: "2100" },
+      pedido: { cliente: "VITOR ALBERTO DE TRENTIN - 12523" + " (2)" },
+      croquiId: null,
+    });
+    expect((await obterCroqui(ana, 1))?.estado).toMatchObject({ pedido: { cliente: "VITOR ALBERTO DE TRENTIN - 12523" } });
+  });
+
+  it("a numeração segue em frente: (2), (3), (4), mesmo duplicando uma cópia", async () => {
+    await salvarCroqui(ana, { estado: estadoDe("Maria") });
+    expect((await duplicarCroqui(ana, 1))?.cliente).toBe("Maria (2)");
+    expect((await duplicarCroqui(ana, 1))?.cliente).toBe("Maria (3)");
+    expect((await duplicarCroqui(ana, 2))?.cliente).toBe("Maria (4)");
+  });
+
+  it("não confunde nomes parecidos nem trata % e _ como curinga", async () => {
+    await salvarCroqui(ana, { estado: estadoDe("Maria") });
+    await salvarCroqui(ana, { estado: estadoDe("Maria Souza (7)") });
+    await salvarCroqui(ana, { estado: estadoDe("100% (a)") });
+    expect((await duplicarCroqui(ana, 1))?.cliente).toBe("Maria (2)");
+    expect((await duplicarCroqui(ana, 3))?.cliente).toBe("100% (a) (2)");
+  });
+
+  it("croqui de outro vendedor: null (nada é criado)", async () => {
+    await salvarCroqui(ana, { estado: estadoDe("Da Ana") });
+    expect(await duplicarCroqui(bia, 1)).toBeNull();
+    expect(await nomes(bia)).toEqual([]);
+  });
+
+  it("o admin duplica o croqui de um vendedor e a cópia fica na lista do admin", async () => {
+    await salvarCroqui(ana, { estado: estadoDe("Da Ana") });
+    const copia = await duplicarCroqui(chefe, 1);
+    expect((await obterCroqui(chefe, copia!.id))?.usuarioId).toBe(chefe.id);
+    expect(await nomes(ana)).toEqual(["Da Ana"]);
+  });
+
+  it("id inexistente: null", async () => {
+    expect(await duplicarCroqui(ana, 999)).toBeNull();
   });
 });

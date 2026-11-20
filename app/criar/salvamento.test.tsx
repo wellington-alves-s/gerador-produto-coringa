@@ -10,7 +10,7 @@ import EtapaResultado from "./resultado/page";
 import EtapaTipo from "./tipo/page";
 
 const push = vi.fn();
-vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn() }) }));
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push, replace: vi.fn() }), usePathname: () => "/criar/tipo" }));
 
 const salvarAgora = vi.fn();
 let estado = ESTADO_INICIAL;
