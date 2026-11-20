@@ -15,7 +15,7 @@ Cerca de 130 vendedores da Madel usarão o app (começando com poucos). Cada um 
 - Plano gratuito do Neon: 1 GB por projeto e 100 CU-hours por mês (conferir os limites do banco criado pelo Marketplace da Vercel).
 
 ## Abordagens consideradas
-1. **Postgres (Neon) + sessão própria** (escolhida): bcrypt + cookie assinado (`jose`) + driver `@neondatabase/serverless`, SQL direto. Poucas dependências, painel de admin e regras de dono ficam em código nosso.
+1. **Postgres (Neon) + sessão própria** (escolhida): scrypt (`node:crypto`) + cookie assinado (`jose`) + driver `@neondatabase/serverless`, SQL direto. Poucas dependências, painel de admin e regras de dono ficam em código nosso.
 2. Auth.js com ORM: o provedor de usuário/senha é a parte menos suportada e traz muito código para 130 usuários. Descartada.
 3. Supabase: exige e-mail para login, segundo serviço e regras por linha. Descartada.
 Alternativa de hospedagem do banco: VM Oracle Always Free com Postgres próprio. Descartada por ora (VM ociosa pode ser recolhida, banco exposto à internet, backup e manutenção por conta do admin). O código é o mesmo Postgres, então a migração futura só troca `DATABASE_URL`/driver.
@@ -43,7 +43,7 @@ Alternativa de hospedagem do banco: VM Oracle Always Free com Postgres próprio.
 - Aviso na tela "Meus croquis" informando a regra vigente.
 
 ## Segurança
-- Senha em bcrypt; nunca em log nem em resposta de API.
+- Senha em scrypt (`node:crypto`), sem dependência extra; nunca em log nem em resposta de API.
 - Todo acesso a croqui filtra por `usuario_id` da sessão (admin é a exceção explícita); id de outro vendedor devolve 404.
 - Chaves em variáveis de ambiente da Vercel (`DATABASE_URL`, `SESSAO_SEGREDO`, `CRON_SECRET`, `ADMIN_*`); nada no repositório.
 - Entrada validada no servidor (tamanho máximo do JSON do croqui, usuário em formato permitido).
@@ -52,4 +52,4 @@ Alternativa de hospedagem do banco: VM Oracle Always Free com Postgres próprio.
 Cookie de sessão de 7 dias; limite de 100 croquis por vendedor como padrão; senha inicial definida pelo admin e trocada só pelo admin; croqui aberto por admin carrega no assistente para consulta, e salvar nele grava como cópia do admin (não sobrescreve o do vendedor); busca por cliente por texto parcial, sem acento.
 
 ## Fica para quem constrói
-Estrutura de pastas e nomes das rotas de API; biblioteca de bcrypt compatível com o ambiente da Vercel; formato exato das mensagens; testes (autenticação, isolamento por dono, limpeza, validação de entrada) e o roteiro de verificação em produção.
+Estrutura de pastas e nomes das rotas de API; formato exato das mensagens; testes (autenticação, isolamento por dono, limpeza, validação de entrada) e o roteiro de verificação em produção.

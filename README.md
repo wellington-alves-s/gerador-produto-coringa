@@ -1,6 +1,6 @@
 # Produto Coringa
 
-Gerador de encomendas especiais (croqui) da Madel, reescrito como uma aplicação Next.js sem backend. O usuário percorre um assistente de 5 etapas (tipo do produto, dados do pedido, especificações técnicas, imagem de referência e revisão) e ao final gera um documento de croqui pronto para impressão/exportação, no mesmo layout dos formulários físicos da Madel. Não há login, banco de dados ou API — o único estado persistido é um rascunho em `localStorage`, usado apenas para recuperar uma encomenda não finalizada.
+Gerador de encomendas especiais (croqui) da Madel, reescrito como uma aplicação Next.js com login de vendedores e croquis salvos na nuvem. O usuário percorre um assistente de 5 etapas (tipo do produto, dados do pedido, especificações técnicas, imagem de referência e revisão) e ao final gera um documento de croqui pronto para impressão/exportação, no mesmo layout dos formulários físicos da Madel. Não há login, banco de dados ou API — o único estado persistido é um rascunho em `localStorage`, usado apenas para recuperar uma encomenda não finalizada.
 
 ## Rodando localmente
 
@@ -47,7 +47,28 @@ Nas etapas de imagem de esquadrias, portas e degrau/patamar/rodapé existe o bot
 
 Para ativar: copie `.env.example` para `.env.local`, preencha `GEMINI_API_KEY` (na Vercel, em *Environment Variables*) e, se quiser, `GEMINI_IMAGE_MODEL`. Sem a chave o botão responde "não configurada".
 
-O acesso à rota está livre; o ponto para adicionar limite por IP ou senha é `lib/servidor/protecao.ts`.
+A rota exige login (veja a seção abaixo).
+
+## Login, croquis salvos e painel do admin
+
+Cada vendedor entra com usuário e senha, e o croqui é salvo automaticamente a cada **Próximo** (a partir do passo Pedido, quando o cliente já foi informado). Em **Meus croquis** (`/criar/croquis`) ele busca por cliente, reabre na Revisão e exclui; cada vendedor vê só os seus. O admin (`/admin`) cria contas, troca senhas, desativa vendedores, vê os croquis de todos e configura a limpeza automática. Não há autocadastro nem "esqueci a senha".
+
+**Preparação (uma vez)**
+
+1. Na Vercel: *Storage → Create → Neon* (plano Free, **Auth desligado**) e conecte ao projeto; isso cria `DATABASE_URL`.
+2. Em *Environment Variables*, defina `SESSAO_SEGREDO` (`openssl rand -base64 48`) e `CRON_SECRET` (qualquer texto longo e aleatório).
+3. No seu computador, copie as variáveis para `.env.local` (use um banco de desenvolvimento, por exemplo uma *branch* da Neon) e rode:
+
+```bash
+# ADMIN_USUARIO e ADMIN_SENHA (mín. 8 caracteres) no .env.local, só para este comando
+npx tsx --env-file=.env.local scripts/preparar-banco.ts
+```
+
+O script cria as tabelas e a conta admin; é seguro rodar de novo (nunca troca senha existente). Rode-o também contra o banco de produção, apontando `DATABASE_URL` para ele, antes do primeiro acesso.
+
+**Limpeza automática:** um cron diário (`vercel.json`, 06:00 UTC) apaga, por vendedor, os croquis além dos N mais recentes (padrão **100**) e, se configurado, os mais velhos que X dias. Só croquis; contas nunca. Sem lixeira. A regra é editada no painel do admin.
+
+**Limites do plano gratuito da Neon:** 1 GB e 100 CU-horas por mês. As imagens coladas ficam dentro do croqui salvo; se o banco pesar, o próximo passo é movê-las para o Vercel Blob. Croquis acima de ~4 MB não salvam (aviso na tela; o rascunho local continua).
 
 ## Mais detalhes
 
