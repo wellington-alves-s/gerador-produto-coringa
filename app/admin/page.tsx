@@ -22,6 +22,9 @@ export default function PaginaAdmin() {
   const [contas, setContas] = useState<Conta[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [novo, setNovo] = useState({ usuario: "", nome: "", senha: "" });
+  const [quantidade, setQuantidade] = useState("");
+  const [dias, setDias] = useState("");
+  const [ultimaLimpeza, setUltimaLimpeza] = useState<{ removidos: number; quando: string } | null>(null);
 
   useEffect(() => {
     if (!carregando && !admin) router.replace("/criar/tipo");
@@ -42,6 +45,37 @@ export default function PaginaAdmin() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (admin) void recarregar();
   }, [admin, recarregar]);
+
+  const aplicarRetencao = useCallback((dados: { retencao?: { maxPorVendedor: number; maxDias: number | null }; ultimaLimpeza?: typeof ultimaLimpeza }) => {
+    if (dados.retencao) {
+      setQuantidade(String(dados.retencao.maxPorVendedor));
+      setDias(dados.retencao.maxDias === null ? "" : String(dados.retencao.maxDias));
+    }
+    setUltimaLimpeza(dados.ultimaLimpeza ?? null);
+  }, []);
+
+  useEffect(() => {
+    if (!admin) return;
+    fetch("/api/admin/retencao")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((dados) => dados && aplicarRetencao(dados))
+      .catch(() => setErro("Não foi possível carregar a regra de limpeza."));
+  }, [admin, aplicarRetencao]);
+
+  async function salvarLimpeza(e: FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    const r = await fetch("/api/admin/retencao", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ maxPorVendedor: Number(quantidade), maxDias: dias.trim() === "" ? null : Number(dias) }),
+    });
+    if (!r.ok) {
+      setErro(await mensagemDeErro(r, "Não foi possível salvar a regra de limpeza."));
+      return;
+    }
+    aplicarRetencao(await r.json());
+  }
 
   async function alterar(id: number, corpo: object, mensagemPadrao: string) {
     setErro(null);
@@ -164,6 +198,31 @@ export default function PaginaAdmin() {
             Criar conta
           </button>
         </form>
+      </section>
+
+      <section className="mb-10 max-w-md">
+        <h2 className="mb-1 text-lg font-semibold">Limpeza automática</h2>
+        <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
+          Todo dia os croquis além do limite são apagados (nunca as contas) e não voltam.
+        </p>
+        <form onSubmit={salvarLimpeza} className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Croquis mantidos por vendedor</span>
+            <input type="number" min={1} max={10000} value={quantidade} onChange={(e) => setQuantidade(e.target.value)} required className={campo} />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm font-medium">Apagar os mais velhos que (dias)</span>
+            <input type="number" min={1} max={3650} value={dias} onChange={(e) => setDias(e.target.value)} placeholder="em branco = não apagar por idade" className={campo} />
+          </label>
+          <button type="submit" className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600">
+            Salvar limpeza
+          </button>
+        </form>
+        <p className="mt-3 text-sm">
+          {ultimaLimpeza
+            ? `Última limpeza: ${ultimaLimpeza.removidos} croquis removidos em ${new Date(ultimaLimpeza.quando).toLocaleString("pt-BR")}.`
+            : "Nenhuma limpeza executada ainda."}
+        </p>
       </section>
     </div>
   );

@@ -22,6 +22,12 @@ beforeEach(() => {
   contas = [conta(2, "ana"), conta(3, "bia", false)];
   fetchMock.mockReset();
   fetchMock.mockImplementation(async (url: string, init?: { method?: string }) => {
+    if (url === "/api/admin/retencao" && !init?.method) {
+      return resposta({ retencao: { maxPorVendedor: 100, maxDias: null }, ultimaLimpeza: { removidos: 3, quando: "2026-11-20T06:00:00.000Z" } });
+    }
+    if (url === "/api/admin/retencao" && init?.method === "PUT") {
+      return resposta({ retencao: JSON.parse((init as { body: string }).body), ultimaLimpeza: null });
+    }
     if (url === "/api/admin/usuarios" && !init?.method) return resposta(contas);
     if (url === "/api/admin/usuarios" && init?.method === "POST") return resposta({}, 201);
     return resposta({}, 204);
@@ -102,5 +108,43 @@ describe("Painel do admin — contas", () => {
     render(<PaginaAdmin />);
     await userEvent.click(await screen.findByRole("button", { name: "Trocar senha de ana" }));
     expect(fetchMock).not.toHaveBeenCalledWith("/api/admin/usuarios/2", expect.anything());
+  });
+});
+
+describe("Painel do admin — limpeza automática", () => {
+  it("mostra a regra atual (100 por vendedor, sem limite de idade) e a última limpeza", async () => {
+    render(<PaginaAdmin />);
+    expect(await screen.findByLabelText("Croquis mantidos por vendedor")).toHaveValue(100);
+    expect(screen.getByLabelText("Apagar os mais velhos que (dias)")).toHaveValue(null);
+    expect(screen.getByText(/3 croquis removidos/)).toBeInTheDocument();
+  });
+
+  it("salva a nova regra; dias em branco vira null", async () => {
+    render(<PaginaAdmin />);
+    const quantidade = await screen.findByLabelText("Croquis mantidos por vendedor");
+    await userEvent.clear(quantidade);
+    await userEvent.type(quantidade, "50");
+    await userEvent.type(screen.getByLabelText("Apagar os mais velhos que (dias)"), "90");
+    await userEvent.click(screen.getByRole("button", { name: "Salvar limpeza" }));
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/admin/retencao",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ maxPorVendedor: 50, maxDias: 90 }) })
+    );
+    await userEvent.clear(screen.getByLabelText("Apagar os mais velhos que (dias)"));
+    await userEvent.click(screen.getByRole("button", { name: "Salvar limpeza" }));
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/api/admin/retencao",
+      expect.objectContaining({ body: JSON.stringify({ maxPorVendedor: 50, maxDias: null }) })
+    );
+  });
+
+  it("mostra o erro do servidor quando a regra é inválida", async () => {
+    render(<PaginaAdmin />);
+    await screen.findByLabelText("Croquis mantidos por vendedor");
+    fetchMock.mockImplementation(async (url: string, init?: { method?: string }) =>
+      init?.method === "PUT" ? resposta({ erro: "Informe um número inteiro de croquis por vendedor entre 1 e 10000." }, 400) : resposta(contas)
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Salvar limpeza" }));
+    expect(await screen.findByText(/entre 1 e 10000/)).toBeInTheDocument();
   });
 });
