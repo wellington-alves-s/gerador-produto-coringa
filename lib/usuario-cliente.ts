@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { limparRascunho } from "./wizard-storage";
 
-export type UsuarioAtual = { usuario: string; nome: string; admin: boolean };
+export type UsuarioAtual = { id: number; usuario: string; nome: string; admin: boolean };
 
 export function useUsuario(): { usuario: UsuarioAtual | null; carregando: boolean } {
   const [estado, setEstado] = useState<{ usuario: UsuarioAtual | null; carregando: boolean }>({

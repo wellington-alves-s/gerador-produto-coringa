@@ -85,7 +85,7 @@ describe("POST /api/logout e GET /api/eu", () => {
       eu(new Request("http://localhost/api/eu", { headers: c ? { cookie: c } : {} }));
     const ok = await chamar(cookie);
     expect(ok.status).toBe(200);
-    expect(await ok.json()).toEqual({ usuario: "ana", nome: "Ana", admin: false });
+    expect(await ok.json()).toEqual({ id: 1, usuario: "ana", nome: "Ana", admin: false });
     expect((await chamar()).status).toBe(401);
     await definirAtivo(1, false);
     expect((await chamar(cookie)).status).toBe(401);
