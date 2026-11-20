@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { MenuUsuario } from "@/components/ui/MenuUsuario";
+import { MarcaInicio } from "@/components/ui/MarcaInicio";
 import { CHAVE_TEMA } from "@/lib/tema";
 
 const geistSans = Geist({
@@ -46,11 +47,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className="min-h-full flex flex-col bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100">
         <header className="flex items-center justify-between border-b-2 border-red-700 bg-black px-4 py-3">
-          <div className="flex items-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/marca/logo-madel.png" alt="Madel" className="h-8 w-auto" />
-            <span className="font-semibold text-white">Produto Coringa</span>
-          </div>
+          <MarcaInicio />
           <div className="flex items-center gap-4">
             <MenuUsuario />
             <ThemeToggle />

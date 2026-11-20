@@ -7,6 +7,7 @@ import { useUsuario } from "@/lib/usuario-cliente";
 type Conta = { id: number; usuario: string; nome: string; admin: boolean; ativo: boolean };
 
 const campo = "w-full rounded-md border px-3 py-2 dark:border-gray-700 dark:bg-gray-900";
+const cartao = "rounded-lg border border-gray-200 p-5 dark:border-gray-800";
 const botao = "rounded-md border px-3 py-1 text-sm dark:border-gray-700";
 
 async function mensagemDeErro(r: Response, padrao: string): Promise<string> {
@@ -121,7 +122,7 @@ export default function PaginaAdmin() {
         </p>
       )}
 
-      <section className="mb-10">
+      <section className={`mb-8 ${cartao}`}>
         <h2 className="mb-3 text-lg font-semibold">Contas</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
@@ -167,63 +168,65 @@ export default function PaginaAdmin() {
         </div>
       </section>
 
-      <section className="mb-10 max-w-md">
-        <h2 className="mb-3 text-lg font-semibold">Nova conta</h2>
-        <form onSubmit={criar} className="space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Usuário</span>
-            <input
-              value={novo.usuario}
-              onChange={(e) => setNovo({ ...novo, usuario: e.target.value })}
-              autoCapitalize="none"
-              required
-              className={campo}
-            />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Nome</span>
-            <input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} required className={campo} />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Senha inicial</span>
-            <input
-              value={novo.senha}
-              onChange={(e) => setNovo({ ...novo, senha: e.target.value })}
-              autoComplete="new-password"
-              required
-              className={campo}
-            />
-          </label>
-          <button type="submit" className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600">
-            Criar conta
-          </button>
-        </form>
-      </section>
+      <div className="grid gap-8 md:grid-cols-2">
+        <section className={cartao}>
+          <h2 className="mb-3 text-lg font-semibold">Nova conta</h2>
+          <form onSubmit={criar} className="space-y-3">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium">Usuário</span>
+              <input
+                value={novo.usuario}
+                onChange={(e) => setNovo({ ...novo, usuario: e.target.value })}
+                autoCapitalize="none"
+                required
+                className={campo}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium">Nome</span>
+              <input value={novo.nome} onChange={(e) => setNovo({ ...novo, nome: e.target.value })} required className={campo} />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium">Senha inicial</span>
+              <input
+                value={novo.senha}
+                onChange={(e) => setNovo({ ...novo, senha: e.target.value })}
+                autoComplete="new-password"
+                required
+                className={campo}
+              />
+            </label>
+            <button type="submit" className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600">
+              Criar conta
+            </button>
+          </form>
+        </section>
 
-      <section className="mb-10 max-w-md">
-        <h2 className="mb-1 text-lg font-semibold">Limpeza automática</h2>
-        <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
-          Todo dia os croquis além do limite são apagados (nunca as contas) e não voltam.
-        </p>
-        <form onSubmit={salvarLimpeza} className="space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Croquis mantidos por vendedor</span>
-            <input type="number" min={1} max={10000} value={quantidade} onChange={(e) => setQuantidade(e.target.value)} required className={campo} />
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-sm font-medium">Apagar os mais velhos que (dias)</span>
-            <input type="number" min={1} max={3650} value={dias} onChange={(e) => setDias(e.target.value)} placeholder="em branco = não apagar por idade" className={campo} />
-          </label>
-          <button type="submit" className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600">
-            Salvar limpeza
-          </button>
-        </form>
-        <p className="mt-3 text-sm">
-          {ultimaLimpeza
-            ? `Última limpeza: ${ultimaLimpeza.removidos} croquis removidos em ${new Date(ultimaLimpeza.quando).toLocaleString("pt-BR")}.`
-            : "Nenhuma limpeza executada ainda."}
-        </p>
-      </section>
+        <section className={cartao}>
+          <h2 className="mb-1 text-lg font-semibold">Limpeza automática</h2>
+          <p className="mb-3 text-sm text-gray-600 dark:text-gray-300">
+            Todo dia os croquis além do limite são apagados (nunca as contas) e não voltam.
+          </p>
+          <form onSubmit={salvarLimpeza} className="space-y-3">
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium">Croquis mantidos por vendedor</span>
+              <input type="number" min={1} max={10000} value={quantidade} onChange={(e) => setQuantidade(e.target.value)} required className={campo} />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-sm font-medium">Apagar os mais velhos que (dias)</span>
+              <input type="number" min={1} max={3650} value={dias} onChange={(e) => setDias(e.target.value)} placeholder="em branco = não apagar por idade" className={campo} />
+            </label>
+            <button type="submit" className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600">
+              Salvar limpeza
+            </button>
+          </form>
+          <p className="mt-3 text-sm">
+            {ultimaLimpeza
+              ? `Última limpeza: ${ultimaLimpeza.removidos} croquis removidos em ${new Date(ultimaLimpeza.quando).toLocaleString("pt-BR")}.`
+              : "Nenhuma limpeza executada ainda."}
+          </p>
+        </section>
+      </div>
     </div>
   );
 }
