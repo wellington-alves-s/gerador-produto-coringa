@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render } from "@testing-library/react";
+import { render, act, waitFor } from "@testing-library/react";
 import { useEffect } from "react";
 import { reducerPedido, WizardProvider, useWizard } from "./wizard-context";
 import { ESTADO_INICIAL } from "./pedido";
@@ -187,5 +187,127 @@ describe("WizardProvider — autosave", () => {
     expect(carregarRascunho()?.tipo).toBe("outros");
 
     vi.useRealTimers();
+  });
+});
+
+describe("reducerPedido — croquiId", () => {
+  it("DEFINIR_CROQUI_ID guarda o id e REINICIAR zera", () => {
+    const comId = reducerPedido(ESTADO_INICIAL, { type: "DEFINIR_CROQUI_ID", id: 9 });
+    expect(comId.croquiId).toBe(9);
+    expect(reducerPedido(comId, { type: "REINICIAR" }).croquiId).toBeNull();
+  });
+});
+
+describe("WizardProvider — salvarAgora", () => {
+  type Contexto = ReturnType<typeof useWizard>;
+  let ctx: Contexto;
+  const fetchMock = vi.fn();
+
+  function Sonda() {
+    ctx = useWizard();
+    return null;
+  }
+  const preparar = async (cliente = "Maria") => {
+    window.localStorage.clear();
+    render(
+      <WizardProvider>
+        <Sonda />
+      </WizardProvider>
+    );
+    await act(async () => {
+      ctx.dispatch({ type: "DEFINIR_TIPO", tipo: "esquadria" });
+      ctx.dispatch({ type: "ATUALIZAR_PEDIDO", campo: "cliente", valor: cliente });
+    });
+  };
+  const resposta = (id: number) => ({ ok: true, status: 200, json: async () => ({ id }) });
+  const corpoDe = (n: number) => JSON.parse(fetchMock.mock.calls[n][1].body);
+
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  it("sem cliente preenchido não chama o servidor", async () => {
+    await preparar("  ");
+    await act(async () => {
+      await ctx.salvarAgora();
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(ctx.statusSalvamento).toBe("ocioso");
+  });
+
+  it("cria o croqui, guarda o id e o salvamento seguinte atualiza o mesmo", async () => {
+    fetchMock.mockResolvedValue(resposta(5));
+    await preparar();
+    await act(async () => {
+      await ctx.salvarAgora();
+    });
+    expect(ctx.estado.croquiId).toBe(5);
+    expect(ctx.statusSalvamento).toBe("salvo");
+    expect(corpoDe(0).id).toBeUndefined();
+    await act(async () => {
+      await ctx.salvarAgora();
+    });
+    expect(corpoDe(1).id).toBe(5);
+  });
+
+  it("dois salvamentos disparados juntos criam um registro só (o segundo espera e atualiza)", async () => {
+    let liberar: () => void = () => {};
+    fetchMock.mockImplementationOnce(() => new Promise((r) => (liberar = () => r(resposta(5)))));
+    fetchMock.mockResolvedValue(resposta(5));
+    await preparar();
+    let ambos: Promise<unknown> = Promise.resolve();
+    await act(async () => {
+      ambos = Promise.all([ctx.salvarAgora(), ctx.salvarAgora()]);
+      await Promise.resolve();
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await act(async () => {
+      liberar();
+      await ambos;
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(corpoDe(0).id).toBeUndefined();
+    expect(corpoDe(1).id).toBe(5);
+  });
+
+  it("resposta que chega depois de REINICIAR não grava o id no croqui novo", async () => {
+    let liberar: () => void = () => {};
+    fetchMock.mockImplementationOnce(() => new Promise((r) => (liberar = () => r(resposta(5)))));
+    await preparar();
+    let pendente: Promise<void> = Promise.resolve();
+    await act(async () => {
+      pendente = ctx.salvarAgora();
+      await Promise.resolve();
+    });
+    await act(async () => {
+      ctx.dispatch({ type: "REINICIAR" });
+    });
+    await act(async () => {
+      liberar();
+      await pendente;
+    });
+    expect(ctx.estado.croquiId).toBeNull();
+    expect(ctx.statusSalvamento).not.toBe("salvo");
+  });
+
+  it("falha do servidor vira status erro com a mensagem, sem lançar", async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 413, json: async () => ({}) });
+    await preparar();
+    await act(async () => {
+      await ctx.salvarAgora();
+    });
+    expect(ctx.statusSalvamento).toBe("erro");
+    expect(ctx.mensagemSalvamento).toMatch(/imagens/);
+    expect(ctx.estado.croquiId).toBeNull();
+  });
+
+  it("o rascunho local continua sendo gravado mesmo com o salvamento falhando", async () => {
+    fetchMock.mockRejectedValue(new Error("offline"));
+    await preparar();
+    await act(async () => {
+      await ctx.salvarAgora();
+    });
+    await waitFor(() => expect(carregarRascunho()?.pedido.cliente).toBe("Maria"));
   });
 });

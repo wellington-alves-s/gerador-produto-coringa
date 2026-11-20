@@ -6,7 +6,7 @@ import { useWizard } from "@/lib/wizard-context";
 import { StepIndicator } from "@/components/wizard/StepIndicator";
 
 export default function EtapaPedido() {
-  const { estado, dispatch } = useWizard();
+  const { estado, dispatch, salvarAgora } = useWizard();
   const router = useRouter();
 
   useEffect(() => {
@@ -97,7 +97,10 @@ export default function EtapaPedido() {
         <button
           type="button"
           disabled={!podeAvancar}
-          onClick={() => router.push("/criar/especificacoes")}
+          onClick={() => {
+            void salvarAgora();
+            router.push("/criar/especificacoes");
+          }}
           className="rounded-md bg-red-700 px-5 py-2 text-white disabled:opacity-40 dark:bg-red-600"
         >
           Próximo →

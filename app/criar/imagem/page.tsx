@@ -14,7 +14,7 @@ import { LogoGemini } from "@/components/ui/LogoGemini";
 import { ModalImagemGerada, type EstadoGeracao } from "@/components/ui/ModalImagemGerada";
 
 export default function EtapaImagem() {
-  const { estado, dispatch } = useWizard();
+  const { estado, dispatch, salvarAgora } = useWizard();
   const router = useRouter();
   const [termoBusca, setTermoBusca] = useState("");
   const [erroUpload, setErroUpload] = useState<string | null>(null);
@@ -225,7 +225,10 @@ export default function EtapaImagem() {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/criar/revisao")}
+          onClick={() => {
+            void salvarAgora();
+            router.push("/criar/revisao");
+          }}
           className="rounded-md bg-red-700 px-5 py-2 text-white dark:bg-red-600"
         >
           Próximo →

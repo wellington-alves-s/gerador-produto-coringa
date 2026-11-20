@@ -7,7 +7,7 @@ import { StepIndicator } from "@/components/wizard/StepIndicator";
 import { EditorDesenho } from "@/components/croqui/EditorDesenho";
 
 export default function EtapaRevisao() {
-  const { estado, dispatch } = useWizard();
+  const { estado, dispatch, salvarAgora } = useWizard();
   const router = useRouter();
 
   useEffect(() => {
@@ -89,7 +89,10 @@ export default function EtapaRevisao() {
         </button>
         <button
           type="button"
-          onClick={() => router.push("/criar/resultado")}
+          onClick={() => {
+            void salvarAgora();
+            router.push("/criar/resultado");
+          }}
           className="rounded-md bg-green-600 px-5 py-2 text-white hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700"
         >
           Gerar Croqui
