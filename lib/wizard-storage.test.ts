@@ -3,18 +3,31 @@ import {
   salvarRascunho,
   carregarRascunho,
   limparRascunho,
-  existeRascunho,
   CHAVE_RASCUNHO,
 } from "./wizard-storage";
 import { ESTADO_INICIAL } from "./pedido";
 
 beforeEach(() => {
+  window.sessionStorage.clear();
   window.localStorage.clear();
 });
 
 describe("wizard-storage", () => {
+  it("o rascunho fica só na sessão da aba (some ao fechar), não no localStorage", () => {
+    salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria" });
+    expect(window.sessionStorage.getItem(CHAVE_RASCUNHO)).not.toBeNull();
+    expect(window.localStorage.getItem(CHAVE_RASCUNHO)).toBeNull();
+  });
+
+  it("limparRascunho também apaga o que a versão antiga deixou no localStorage", () => {
+    window.localStorage.setItem(CHAVE_RASCUNHO, "{}");
+    salvarRascunho({ ...ESTADO_INICIAL, tipo: "outros" });
+    limparRascunho();
+    expect(window.localStorage.getItem(CHAVE_RASCUNHO)).toBeNull();
+    expect(carregarRascunho()).toBeNull();
+  });
+
   it("não existe rascunho antes de salvar nada", () => {
-    expect(existeRascunho()).toBe(false);
     expect(carregarRascunho()).toBeNull();
   });
 
@@ -22,7 +35,6 @@ describe("wizard-storage", () => {
     const estado = { ...ESTADO_INICIAL, tipo: "esquadria" as const };
     salvarRascunho(estado);
     expect(carregarRascunho()).toEqual(estado);
-    expect(existeRascunho()).toBe(true);
   });
 
   it("limparRascunho remove o que estava salvo", () => {
@@ -32,17 +44,17 @@ describe("wizard-storage", () => {
   });
 
   it("ignora um valor corrompido salvo diretamente na chave", () => {
-    window.localStorage.setItem(CHAVE_RASCUNHO, "{not json");
+    window.sessionStorage.setItem(CHAVE_RASCUNHO, "{not json");
     expect(carregarRascunho()).toBeNull();
   });
 
   it("rascunhos antigos, sem o desenho ou sem os apagamentos, ganham os valores padrão", () => {
     const { desenho: _semDesenho, ...antigo } = { ...ESTADO_INICIAL, tipo: "esquadria" as const };
     void _semDesenho;
-    window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(antigo));
+    window.sessionStorage.setItem(CHAVE_RASCUNHO, JSON.stringify(antigo));
     expect(carregarRascunho()?.desenho).toEqual({ elementos: [], imagem: null, apagamentos: [] });
 
-    window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify({ ...antigo, desenho: { elementos: [], imagem: null } }));
+    window.sessionStorage.setItem(CHAVE_RASCUNHO, JSON.stringify({ ...antigo, desenho: { elementos: [], imagem: null } }));
     expect(carregarRascunho()?.desenho.apagamentos).toEqual([]);
   });
 
@@ -52,7 +64,7 @@ describe("wizard-storage", () => {
     expect(carregarRascunho()?.desenho.apagamentos).toEqual(apagamentos);
   });
 
-  describe("cota do localStorage esgotada", () => {
+  describe("cota do sessionStorage esgotada", () => {
     afterEach(() => vi.restoreAllMocks());
 
     const estado = {

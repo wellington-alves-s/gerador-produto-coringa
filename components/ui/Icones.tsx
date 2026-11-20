@@ -21,6 +21,12 @@ function Svg({ children, tamanho = 16 }: { children: ReactNode; tamanho?: number
 }
 
 export const Icone = {
+  Casa: () => (
+    <Svg tamanho={20}>
+      <path d="M3 11l9-8 9 8" />
+      <path d="M5 10v10h5v-6h4v6h5V10" />
+    </Svg>
+  ),
   Selecionar: () => (
     <Svg>
       <path d="M5 3l14 7-6 2-2 6z" />

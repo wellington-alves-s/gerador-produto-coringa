@@ -28,6 +28,8 @@ export type EstadoPedido = {
   };
   /** Posição da imagem e anotações (linhas, setas, textos...) editadas na etapa de Revisão. */
   desenho: DesenhoEstado;
+  /** Id do croqui já salvo na nuvem (null = ainda não salvo ou cópia). Definido pelo salvamento automático. */
+  croquiId: number | null;
 };
 
 export const ESTADO_INICIAL: EstadoPedido = {
@@ -38,4 +40,5 @@ export const ESTADO_INICIAL: EstadoPedido = {
   imagem: { origem: null, bibliotecaId: null, uploadDataUrl: null },
   compra: { fornecedor: "", custo: "", tabelaMadel: false },
   desenho: DESENHO_INICIAL,
+  croquiId: null,
 };

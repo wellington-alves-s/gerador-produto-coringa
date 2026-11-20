@@ -10,7 +10,7 @@ import { CampoDinamico } from "@/components/forms/CampoDinamico";
 import { ModalAviso } from "@/components/ui/ModalAviso";
 
 export default function EtapaEspecificacoes() {
-  const { estado, dispatch } = useWizard();
+  const { estado, dispatch, salvarAgora } = useWizard();
   const router = useRouter();
   const config = estado.tipo ? PRODUTOS[estado.tipo] : null;
   const [tentouAvancar, setTentouAvancar] = useState(false);
@@ -41,6 +41,7 @@ export default function EtapaEspecificacoes() {
       setModalAberto(true);
       return;
     }
+    void salvarAgora();
     router.push("/criar/imagem");
   }
 

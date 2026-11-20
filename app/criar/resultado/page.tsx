@@ -9,7 +9,7 @@ import { exportarComoPdf } from "@/lib/exportar-pdf";
 import { exportarComoImagem } from "@/lib/exportar-imagem";
 
 export default function EtapaResultado() {
-  const { estado } = useWizard();
+  const { estado, salvarAgora, statusSalvamento, mensagemSalvamento } = useWizard();
   const router = useRouter();
   const referenciaDocumento = useRef<HTMLDivElement>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -73,6 +73,10 @@ export default function EtapaResultado() {
       </div>
 
       {erro && <p className="mb-4 text-sm text-red-700">{erro}</p>}
+      {statusSalvamento === "erro" && mensagemSalvamento && (
+        <p className="mb-4 text-sm text-red-700">{mensagemSalvamento}</p>
+      )}
+      {statusSalvamento === "salvo" && <p className="mb-4 text-sm text-green-700 dark:text-green-400">Croqui salvo.</p>}
 
       <div className="flex flex-wrap gap-3">
         <button
@@ -81,6 +85,15 @@ export default function EtapaResultado() {
           className="rounded-md bg-blue-600 px-5 py-2 text-white hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700"
         >
           ← Voltar para Revisão
+        </button>
+        <button
+          type="button"
+          disabled={!estado.pedido.cliente.trim() || statusSalvamento === "salvando"}
+          title={estado.pedido.cliente.trim() ? undefined : "Informe o cliente na etapa Pedido para salvar"}
+          onClick={() => void salvarAgora()}
+          className="rounded-md bg-green-600 px-5 py-2 text-white hover:bg-green-700 disabled:opacity-40 dark:bg-green-600"
+        >
+          Salvar
         </button>
         <button
           type="button"
