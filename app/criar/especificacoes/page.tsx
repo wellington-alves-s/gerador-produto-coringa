@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useWizard } from "@/lib/wizard-context";
 import { PRODUTOS } from "@/produtos";
-import { camposFaltando } from "@/produtos/validacao";
+import { campoEfetivo, camposFaltando, camposVisiveis } from "@/produtos/validacao";
 import { StepIndicator } from "@/components/wizard/StepIndicator";
 import { CampoDinamico } from "@/components/forms/CampoDinamico";
 import { ModalAviso } from "@/components/ui/ModalAviso";
@@ -50,10 +50,10 @@ export default function EtapaEspecificacoes() {
       <h1 className="mb-6 text-2xl font-semibold">Especificações — {config.nome}</h1>
 
       <div className="space-y-5">
-        {config.campos.map((campo) => (
+        {camposVisiveis(config.campos, estado.especificacoes).map((campo) => (
           <CampoDinamico
             key={campo.id}
-            campo={campo}
+            campo={campoEfetivo(campo, estado.especificacoes)}
             valor={estado.especificacoes[campo.id] ?? ""}
             aoAlterar={(valor) => dispatch({ type: "ATUALIZAR_ESPECIFICACAO", campoId: campo.id, valor })}
             erro={tentouAvancar && faltando.some((campoFaltante) => campoFaltante.id === campo.id)}

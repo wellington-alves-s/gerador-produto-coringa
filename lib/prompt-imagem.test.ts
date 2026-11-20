@@ -32,6 +32,7 @@ describe("esquadria", () => {
   const estado = estadoDe(
     "esquadria",
     {
+      tipoEsquadria: "JANELA",
       categoria: "VENEZIANA",
       altura: "1200",
       largura: "1500",
@@ -47,10 +48,10 @@ describe("esquadria", () => {
 
   it("monta as seções a partir das opções marcadas", () => {
     const d = montarDescricaoImagem(estado) as Record<string, Record<string, unknown>>;
-    expect(d.detalhes_do_objeto.tipo_especifico).toBe("Esquadria veneziana");
+    expect(d.detalhes_do_objeto.tipo_especifico).toBe("Esquadria do tipo janela, veneziana");
     expect(d.materiais_e_acabamentos.padrao_de_madeira).toBe("Cedro");
     expect(d.estrutura_e_componentes.sistema_de_movimentacao).toEqual({ mecanismo: "correr", lado_de_abertura: "central" });
-    expect(d.ferragens_visiveis.acabamento).toMatch(/Latão oxidado/);
+    expect(d.ferragens_visiveis.acabamento).toMatch(/Ouro velho/);
     expect(d.observacoes_do_pedido.descricao_do_produto).toBe("Janela de sala com 4 folhas");
     expect(d.fundo).toEqual({ tipo: "Recortado", cor: "Branco" });
   });
@@ -217,7 +218,7 @@ describe("montarPromptImagem", () => {
     const estado = estadoDe("esquadria", { categoria: "VENEZIANA" });
     const sem = montarPromptImagem(estado) as string;
     const com = montarPromptImagem(estado, { temReferencia: true }) as string;
-    expect(sem).toContain('"tipo_especifico": "Esquadria veneziana"');
+    expect(sem).toContain('"tipo_especifico": "Esquadria, veneziana"');
     expect(sem).not.toMatch(/referência de estilo/);
     expect(com).toMatch(/referência de estilo/);
   });
@@ -228,3 +229,5 @@ describe("limparDescricao", () => {
     expect(limparDescricao({ a: "", b: { c: undefined, d: "x" }, e: [], f: ["", "y"] })).toEqual({ b: { d: "x" }, f: ["y"] });
   });
 });
+
+

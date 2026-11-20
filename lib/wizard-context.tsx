@@ -5,7 +5,7 @@ import { ESTADO_INICIAL, type EstadoPedido, type EtapaId } from "./pedido";
 import { existeRascunho, salvarRascunho } from "./wizard-storage";
 import { PRODUTOS } from "@/produtos";
 import type { Campo, TipoProdutoId } from "@/produtos/tipos";
-import { dependenciaAtiva } from "@/produtos/validacao";
+import { campoEfetivo, campoVisivel, dependenciaAtiva } from "@/produtos/validacao";
 import { DESENHO_INICIAL, type DesenhoEstado } from "./desenho";
 
 export type AcaoPedido =
@@ -31,9 +31,15 @@ function limparEspecificacoesDependentesInativas(
   while (mudou) {
     mudou = false;
     for (const campo of campos) {
-      if (!campo.dependeDe || !resultado[campo.id]) continue;
-      const dependeAtivo = dependenciaAtiva(resultado[campo.dependeDe.campoId], campo.dependeDe.valores);
-      if (!dependeAtivo) {
+      const valor = resultado[campo.id];
+      if (!valor) continue;
+      const dependenciaInativa =
+        campo.dependeDe && !dependenciaAtiva(resultado[campo.dependeDe.campoId], campo.dependeDe.valores);
+      const opcaoNaoPermitida =
+        campo.tipo === "opcao-unica" &&
+        campo.opcoesPorValor &&
+        !(campoEfetivo(campo, resultado) as typeof campo).opcoes.includes(valor);
+      if (dependenciaInativa || opcaoNaoPermitida || !campoVisivel(campo, resultado)) {
         resultado = { ...resultado, [campo.id]: "" };
         mudou = true;
       }

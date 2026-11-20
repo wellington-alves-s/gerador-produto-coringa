@@ -31,7 +31,7 @@ describe("POST /api/gerar-imagem", () => {
     expect(resposta.status).toBe(200);
     expect(await resposta.json()).toEqual({ imagem: "data:image/png;base64,QUJD" });
     const [prompt, referencia] = gerarMock.mock.calls[0];
-    expect(prompt).toContain("Esquadria veneziana");
+    expect(prompt).toContain("Esquadria, veneziana");
     expect(referencia).toBeUndefined();
   });
 
@@ -77,3 +77,4 @@ describe("POST /api/gerar-imagem", () => {
     expect((await resposta.json()).erro).toMatch(/não configurada/);
   });
 });
+

@@ -103,7 +103,7 @@ const DESCRICAO_VIDROS: Record<string, string> = {
 const ACABAMENTO_FERRAGEM: Record<string, string> = {
   CROMADO: "Cromado (prateado brilhante)",
   PRETO: "Preto fosco",
-  LO: "Latão oxidado (LO), dourado envelhecido",
+  LO: "Ouro velho (LO), dourado envelhecido",
 };
 
 const LADOS_GUARNICAO: Record<string, string> = {
@@ -115,6 +115,7 @@ const LADOS_GUARNICAO: Record<string, string> = {
 
 function descreverEsquadria(estado: EstadoPedido): DescricaoImagem {
   const categorias = selecionadas(estado, "categoria");
+  const familia = texto(estado, "tipoEsquadria");
   const ferragem = texto(estado, "comSemFerragem");
   const tipoAbertura = texto(estado, "tipoAbertura");
   const ladoAbertura = texto(estado, "ladoAbertura");
@@ -128,7 +129,12 @@ function descreverEsquadria(estado: EstadoPedido): DescricaoImagem {
   return {
     detalhes_do_objeto: {
       categoria: "Esquadria de madeira",
-      tipo_especifico: categorias.length > 0 ? `Esquadria ${listaMinusculas(categorias)}` : "Esquadria",
+      tipo_especifico: [
+        familia ? `Esquadria do tipo ${minusculas(familia)}` : "Esquadria",
+        listaMinusculas(categorias),
+      ]
+        .filter(Boolean)
+        .join(", "),
       formato_geral: [formato ? `Formato ${minusculas(formato)}` : undefined, formaGeral]
         .filter(Boolean)
         .join(". "),

@@ -56,6 +56,8 @@ describe("Etapa Especificações", () => {
       </WizardProvider>
     );
 
+    await user.click(screen.getByLabelText("JANELA"));
+    await user.click(screen.getByLabelText("VENEZIANA"));
     await user.type(screen.getByLabelText(/^Altura/), "2100");
     await user.type(screen.getByLabelText(/^Largura/), "900");
     await user.type(screen.getByLabelText(/^Caixa/), "140");
@@ -81,6 +83,8 @@ describe("Etapa Especificações", () => {
       </WizardProvider>
     );
 
+    await user.click(screen.getByLabelText("JANELA"));
+    await user.click(screen.getByLabelText("VENEZIANA"));
     await user.type(screen.getByLabelText(/^Altura/), "2100");
     await user.type(screen.getByLabelText(/^Largura/), "900");
     await user.type(screen.getByLabelText(/^Caixa/), "140");
@@ -93,6 +97,55 @@ describe("Etapa Especificações", () => {
     await user.click(screen.getByRole("button", { name: /Próximo/ }));
 
     expect(push).toHaveBeenCalledWith("/criar/imagem");
+  });
+
+  it("esquadria: só mostra o tipo de esquadria até ele ser escolhido, e filtra as aberturas por tipo", async () => {
+    const user = userEvent.setup();
+    render(
+      <WizardProvider>
+        <ComTipo tipo="esquadria">
+          <EtapaEspecificacoes />
+        </ComTipo>
+      </WizardProvider>
+    );
+
+    expect(screen.getByLabelText("PORTA DE CORRER")).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Altura/)).toBeNull();
+    expect(screen.queryByLabelText("CORRER")).toBeNull();
+
+    await user.click(screen.getByLabelText("PORTA DE CORRER"));
+    expect(screen.getByLabelText("CAMARÃO")).toBeInTheDocument();
+    expect(screen.queryByLabelText("PIVOTANTE")).toBeNull();
+    expect(screen.queryByLabelText("TIPO DE PALHETA")).toBeNull();
+    expect(screen.queryByText(/^Tipo de palheta/)).toBeNull();
+
+    await user.click(screen.getByLabelText("VENEZIANA"));
+    expect(screen.getByText(/^Tipo de palheta/)).toBeInTheDocument();
+  });
+
+  it("esquadria: trocar o tipo descarta a abertura que deixou de valer, e Fixo some com abertura e ferragem", async () => {
+    const user = userEvent.setup();
+    render(
+      <WizardProvider>
+        <ComTipo tipo="esquadria">
+          <EtapaEspecificacoes />
+        </ComTipo>
+      </WizardProvider>
+    );
+
+    await user.click(screen.getByLabelText("PORTA DE CORRER"));
+    await user.click(screen.getByLabelText("CAMARÃO"));
+    expect(screen.getByLabelText("CAMARÃO")).toBeChecked();
+
+    await user.click(screen.getByLabelText("JANELA"));
+    expect(screen.getByLabelText("BY WINDOW")).toBeInTheDocument();
+    expect(screen.queryByLabelText("CAMARÃO")).toBeNull();
+    expect(screen.getByLabelText("CORRER")).not.toBeChecked();
+
+    await user.click(screen.getByLabelText("FIXO"));
+    expect(screen.queryByText(/^Tipo de abertura/)).toBeNull();
+    expect(screen.queryByText(/^Ferragem/)).toBeNull();
+    expect(screen.getByLabelText(/^Altura/)).toBeInTheDocument();
   });
 
   it("mostra Detalhes, Altura e Largura pra Outros, e avança mesmo sem preenchê-los (nenhum é obrigatório)", async () => {
@@ -209,3 +262,4 @@ describe("Etapa Especificações", () => {
     expect(screen.getByRole("dialog")).toHaveTextContent("Padrão de madeira");
   });
 });
+

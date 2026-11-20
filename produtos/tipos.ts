@@ -14,6 +14,12 @@ export type CampoBase = {
   linha?: number;
   /** Torna este campo obrigatório somente quando o campo `campoId` tiver um dos `valores`. */
   dependeDe?: { campoId: string; valores: string[] };
+  /**
+   * O campo só aparece (formulário, documento, validação) quando o campo `campoId` tiver um dos
+   * `valores`; ao deixar de valer, a resposta é descartada. Diferente de `dependeDe`, que só
+   * define se é obrigatório.
+   */
+  visivelQuando?: { campoId: string; valores: string[] };
   /** Omite o label deste campo no documento impresso (ex.: continuação de outro campo com o mesmo label). */
   ocultarLabelDocumento?: boolean;
   /**
@@ -32,7 +38,12 @@ export type CampoMedida = CampoBase & {
   casasInteiras?: number;
 };
 export type CampoTexto = CampoBase & { tipo: "texto" };
-export type CampoOpcaoUnica = CampoBase & { tipo: "opcao-unica"; opcoes: string[] };
+export type CampoOpcaoUnica = CampoBase & {
+  tipo: "opcao-unica";
+  opcoes: string[];
+  /** Restringe as opções conforme o valor de outro campo (valor sem entrada no mapa = nenhuma opção). */
+  opcoesPorValor?: { campoId: string; mapa: Record<string, string[]> };
+};
 export type CampoMultiplaEscolha = CampoBase & {
   tipo: "multipla-escolha";
   opcoes: string[];

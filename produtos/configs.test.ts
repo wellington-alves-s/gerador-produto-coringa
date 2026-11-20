@@ -253,21 +253,14 @@ describe("configs de produto — conteúdo específico", () => {
     expect(campo?.dependeDe).toEqual({ campoId: "comSemFerragem", valores: ["COM FERRAGENS"] });
   });
 
-  it("esquadria: tipo de abertura tem a lista completa de opções do formulário físico", () => {
+  it("esquadria: tipo de abertura oferece, por tipo de esquadria, só as aberturas possíveis", () => {
     const campo = PRODUTOS.esquadria.campos.find((c) => c.id === "tipoAbertura");
-    expect(campo && "opcoes" in campo ? campo.opcoes : []).toEqual([
-      "CORRER",
-      "ABRIR/ABRIR",
-      "CORRER/ABRIR",
-      "PANTOGRÁFICA",
-      "CAMARÃO",
-      "GIRO",
-      "PIVOTANTE",
-      "BASCULANTE",
-      "MAX-AR",
-      "GUILHOTINA/ABRIR",
-      "BY WINDOW",
-    ]);
+    const mapa = campo?.tipo === "opcao-unica" ? campo.opcoesPorValor?.mapa : undefined;
+    expect(mapa?.["PORTA DE CORRER"]).toEqual(["CORRER", "PANTOGRÁFICA", "CAMARÃO", "GIRO"]);
+    expect(mapa?.["PORTA BALCÃO"]).toEqual(["ABRIR/ABRIR", "CORRER/ABRIR", "GIRO"]);
+    expect(mapa?.["VITRÔ"]).toContain("MAX-AR");
+    expect(mapa?.["FIXO"]).toBeUndefined();
+    expect(campo?.tipo === "opcao-unica" ? campo.opcoes.length : 0).toBe(11);
   });
 
   it("esquadria: lado de abertura tem Esquerda, Direita, Central e Banda louca", () => {
@@ -310,3 +303,4 @@ describe("configs de produto — conteúdo específico", () => {
     expect(PRODUTOS.outros.campoAltura).toBe("altura");
   });
 });
+

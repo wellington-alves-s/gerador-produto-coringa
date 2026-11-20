@@ -9,7 +9,7 @@ describe("DocumentoCroqui", () => {
       ...ESTADO_INICIAL,
       tipo: "esquadria" as const,
       pedido: { ...ESTADO_INICIAL.pedido, descricao: "Janela de sala" },
-      especificacoes: { altura: "2100", largura: "1200" },
+      especificacoes: { tipoEsquadria: "JANELA", altura: "2100", largura: "1200" },
     };
     render(<DocumentoCroqui estado={estado} />);
 
@@ -22,7 +22,7 @@ describe("DocumentoCroqui", () => {
     const estado = {
       ...ESTADO_INICIAL,
       tipo: "esquadria" as const,
-      especificacoes: { categoria: "QUADRICULADO|VENEZIANA" },
+      especificacoes: { tipoEsquadria: "JANELA", categoria: "QUADRICULADO|VENEZIANA" },
     };
     render(<DocumentoCroqui estado={estado} />);
 
@@ -35,7 +35,11 @@ describe("DocumentoCroqui", () => {
   });
 
   it("esquadria: campo com exibirApenasSelecionadas mostra travessão quando nada foi marcado", () => {
-    const estado = { ...ESTADO_INICIAL, tipo: "esquadria" as const };
+    const estado = {
+      ...ESTADO_INICIAL,
+      tipo: "esquadria" as const,
+      especificacoes: { tipoEsquadria: "JANELA" },
+    };
     render(<DocumentoCroqui estado={estado} />);
 
     expect(screen.getByText("Categoria: —")).toBeInTheDocument();
@@ -150,7 +154,7 @@ describe("DocumentoCroqui", () => {
     const estado = {
       ...ESTADO_INICIAL,
       tipo: "esquadria" as const,
-      especificacoes: { altura: "2100", largura: "1200" },
+      especificacoes: { tipoEsquadria: "JANELA", altura: "2100", largura: "1200" },
     };
     render(<DocumentoCroqui estado={estado} />);
 
@@ -221,3 +225,4 @@ describe("DocumentoCroqui", () => {
     expect(temGrade()).toBe(false);
   });
 });
+

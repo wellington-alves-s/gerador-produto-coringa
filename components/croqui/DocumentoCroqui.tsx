@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import type { Campo, CampoMultiplaEscolha, CampoOpcaoUnica, ConfigProduto } from "@/produtos/tipos";
 import { PRODUTOS } from "@/produtos";
+import { campoEfetivo, camposVisiveis } from "@/produtos/validacao";
 import type { EstadoPedido } from "@/lib/pedido";
 import { formatarMedidaParaExibicao } from "@/lib/formatacao";
 import { caminhoImagem } from "@/lib/biblioteca";
@@ -157,10 +158,14 @@ export function DocumentoCroqui({ estado, camadaEdicao }: Props) {
           {config.campos.length > 0 && (
             <div className="mb-3 border border-[#991b1b] p-2">
               <h2 className="mb-1 font-bold uppercase">Especificações técnicas</h2>
-              {agruparPorLinha(config.campos).map((linha) => (
+              {agruparPorLinha(camposVisiveis(config.campos, estado.especificacoes)).map((linha) => (
                 <div key={linha.map((campo) => campo.id).join("+")} className="mb-1 flex flex-wrap gap-x-6 gap-y-1">
                   {linha.map((campo) => (
-                    <CampoEspecificacao key={campo.id} campo={campo} valor={estado.especificacoes[campo.id]} />
+                    <CampoEspecificacao
+                      key={campo.id}
+                      campo={campoEfetivo(campo, estado.especificacoes)}
+                      valor={estado.especificacoes[campo.id]}
+                    />
                   ))}
                 </div>
               ))}
