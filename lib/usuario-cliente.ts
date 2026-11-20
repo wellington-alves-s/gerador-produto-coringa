@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { limparRascunho } from "./wizard-storage";
 
 export type UsuarioAtual = { id: number; usuario: string; nome: string; admin: boolean };
@@ -11,6 +12,9 @@ export function useUsuario(): { usuario: UsuarioAtual | null; carregando: boolea
     carregando: true,
   });
 
+  // Refaz a consulta a cada troca de página: entrar, sair ou trocar de conta é navegação no cliente
+  // (sem recarregar), e o menu não pode ficar mostrando o usuário anterior.
+  const caminho = usePathname();
   useEffect(() => {
     let ativo = true;
     fetch("/api/eu")
@@ -20,7 +24,7 @@ export function useUsuario(): { usuario: UsuarioAtual | null; carregando: boolea
     return () => {
       ativo = false;
     };
-  }, []);
+  }, [caminho]);
 
   return estado;
 }

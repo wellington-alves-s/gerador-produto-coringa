@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MenuUsuario } from "./MenuUsuario";
 import { CHAVE_RASCUNHO } from "@/lib/wizard-storage";
@@ -55,5 +55,33 @@ describe("MenuUsuario", () => {
     usuarioLogado(false);
     const { container } = render(<MenuUsuario />);
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+describe("MenuUsuario — troca de usuário sem recarregar a página", () => {
+  it("depois de entrar (navegação no cliente) o menu aparece; depois de trocar de conta mostra a nova", async () => {
+    let logado: { usuario: string; nome: string; admin: boolean } | null = null;
+    fetchMock.mockImplementation(async (url: string) =>
+      url === "/api/eu" ? (logado ? { ok: true, json: async () => logado } : { ok: false, json: async () => ({}) }) : { ok: true, json: async () => ({}) }
+    );
+    caminho = "/login";
+    const { rerender, container } = render(<MenuUsuario />);
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledWith("/api/eu"));
+    expect(container).toBeEmptyDOMElement();
+
+    logado = { usuario: "ana", nome: "Ana Souza", admin: true };
+    caminho = "/criar/tipo";
+    rerender(<MenuUsuario />);
+    expect(await screen.findByText("Ana Souza")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Admin" })).toBeInTheDocument();
+
+    logado = { usuario: "bia", nome: "Bia Lima", admin: false };
+    caminho = "/login";
+    rerender(<MenuUsuario />);
+    caminho = "/criar/tipo";
+    rerender(<MenuUsuario />);
+    expect(await screen.findByText("Bia Lima")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Admin" })).toBeNull();
+    expect(screen.queryByText("Ana Souza")).toBeNull();
   });
 });

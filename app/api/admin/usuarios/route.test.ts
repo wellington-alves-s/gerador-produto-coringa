@@ -61,6 +61,18 @@ describe("/api/admin/usuarios", () => {
     expect((await entrar("senha-da-ana")).status).toBe(401);
   });
 
+  it("trocar a senha derruba a sessão que já estava aberta, e o novo login funciona", async () => {
+    const eu2 = () => eu(new Request("http://localhost/api/eu", { headers: { cookie: cookieAna } }));
+    expect((await eu2()).status).toBe(200);
+    await patch(2, { senha: "nova-senha-123" });
+    expect((await eu2()).status).toBe(401);
+    const r = await login(
+      new Request("http://localhost/api/login", { method: "POST", body: JSON.stringify({ usuario: "ana", senha: "nova-senha-123" }) })
+    );
+    const novoCookie = (r.headers.get("set-cookie") ?? "").split(";")[0];
+    expect((await eu(new Request("http://localhost/api/eu", { headers: { cookie: novoCookie } }))).status).toBe(200);
+  });
+
   it("senha nova curta: 400", async () => {
     expect((await patch(2, { senha: "curta" })).status).toBe(400);
   });

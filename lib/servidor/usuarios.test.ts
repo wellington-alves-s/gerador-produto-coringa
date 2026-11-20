@@ -59,3 +59,16 @@ describe("usuarios", () => {
     await expect(trocarSenha(u.id, "curta")).rejects.toBeInstanceOf(ErroValidacao);
   });
 });
+
+describe("usuarios — versão da sessão", () => {
+  it("trocar a senha e desativar a conta sobem a versão; ativar não desce", async () => {
+    const u = await criarUsuario({ usuario: "ana", nome: "Ana", senha: "senha-forte" });
+    expect((await buscarPorId(u.id))?.sessaoVersao).toBe(0);
+    await trocarSenha(u.id, "outra-senha-1");
+    expect((await buscarPorId(u.id))?.sessaoVersao).toBe(1);
+    await definirAtivo(u.id, false);
+    expect((await buscarPorId(u.id))?.sessaoVersao).toBe(2);
+    await definirAtivo(u.id, true);
+    expect((await buscarPorId(u.id))?.sessaoVersao).toBe(2);
+  });
+});

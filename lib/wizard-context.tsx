@@ -98,6 +98,21 @@ export function reducerPedido(estado: EstadoPedido, acao: AcaoPedido): EstadoPed
   }
 }
 
+/**
+ * Se o croqui já salvo não existe mais para este usuário (apagado pela limpeza, em outra aba, ou
+ * rascunho de outra conta), o 404 não pode travar o salvamento: recria o croqui uma vez.
+ */
+async function salvarComRecuperacao(estado: EstadoPedido): Promise<number> {
+  try {
+    return await salvarCroquiNoServidor(estado);
+  } catch (erro) {
+    if (erro instanceof ErroSalvamento && erro.status === 404 && estado.croquiId !== null) {
+      return salvarCroquiNoServidor({ ...estado, croquiId: null });
+    }
+    throw erro;
+  }
+}
+
 export type StatusSalvamento = "ocioso" | "salvando" | "salvo" | "erro";
 
 type WizardContextValor = {
@@ -155,7 +170,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
       const minhaGeracao = geracao.current;
       setSalvamento({ status: "salvando", mensagem: null });
       try {
-        const id = await salvarCroquiNoServidor(atual);
+        const id = await salvarComRecuperacao(atual);
         if (minhaGeracao !== geracao.current) return;
         ultimoId.current = { geracao: minhaGeracao, id };
         estadoRef.current = { ...estadoRef.current, croquiId: id };

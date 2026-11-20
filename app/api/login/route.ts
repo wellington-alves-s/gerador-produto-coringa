@@ -45,7 +45,10 @@ export async function POST(requisicao: Request) {
   }
 
   await limparTentativas(chaveUsuario);
-  const token = await criarSessao({ id: conta.id, usuario: conta.usuario, nome: conta.nome, admin: conta.admin });
+  const token = await criarSessao(
+    { id: conta.id, usuario: conta.usuario, nome: conta.nome, admin: conta.admin },
+    conta.sessaoVersao
+  );
   const r = resposta({ usuario: conta.usuario, nome: conta.nome, admin: conta.admin }, 200);
   r.cookies.set(COOKIE_SESSAO, token, opcoesCookieSessao());
   return r;

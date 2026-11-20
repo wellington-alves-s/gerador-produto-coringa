@@ -7,6 +7,8 @@ export const COMANDOS_ESQUEMA: string[] = [
     senha_hash TEXT NOT NULL,
     admin BOOLEAN NOT NULL DEFAULT false,
     ativo BOOLEAN NOT NULL DEFAULT true,
+    -- sobe ao trocar a senha ou desativar a conta: invalida as sessões (cookies) já emitidas
+    sessao_versao INT NOT NULL DEFAULT 0,
     criado_em TIMESTAMPTZ NOT NULL DEFAULT now()
   )`,
   `CREATE TABLE IF NOT EXISTS croquis (

@@ -311,3 +311,42 @@ describe("WizardProvider — salvarAgora", () => {
     await waitFor(() => expect(carregarRascunho()?.pedido.cliente).toBe("Maria"));
   });
 });
+
+describe("WizardProvider — croquiId que deixou de existir", () => {
+  type Contexto = ReturnType<typeof useWizard>;
+  let ctx: Contexto;
+  const fetchMock = vi.fn();
+  function Sonda() {
+    ctx = useWizard();
+    return null;
+  }
+
+  it("404 num croqui já salvo: descarta o id, recria o croqui e guarda o novo id (sem travar o salvamento)", async () => {
+    window.localStorage.clear();
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+    render(
+      <WizardProvider>
+        <Sonda />
+      </WizardProvider>
+    );
+    await act(async () => {
+      ctx.dispatch({ type: "DEFINIR_TIPO", tipo: "esquadria" });
+      ctx.dispatch({ type: "ATUALIZAR_PEDIDO", campo: "cliente", valor: "Maria" });
+      ctx.dispatch({ type: "DEFINIR_CROQUI_ID", id: 42 });
+    });
+    fetchMock
+      .mockResolvedValueOnce({ ok: false, status: 404, json: async () => ({}) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ id: 9 }) });
+
+    await act(async () => {
+      await ctx.salvarAgora();
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body).id).toBe(42);
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).id).toBeUndefined();
+    expect(ctx.estado.croquiId).toBe(9);
+    expect(ctx.statusSalvamento).toBe("salvo");
+  });
+});

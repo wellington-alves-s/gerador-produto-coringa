@@ -15,7 +15,7 @@ afterEach(() => {
 
 describe("sessao", () => {
   it("o token criado volta como o mesmo usuário", async () => {
-    expect(await lerSessao(await criarSessao(usuario))).toEqual(usuario);
+    expect(await lerSessao(await criarSessao(usuario))).toEqual({ ...usuario, versao: 0 });
   });
 
   it("token adulterado, de outro segredo ou ausente vira null", async () => {
@@ -34,9 +34,13 @@ describe("sessao", () => {
     vi.setSystemTime(new Date("2026-11-20T10:00:00Z"));
     const token = await criarSessao(usuario);
     vi.setSystemTime(new Date("2026-11-27T09:59:00Z"));
-    expect(await lerSessao(token)).toEqual(usuario);
+    expect(await lerSessao(token)).toEqual({ ...usuario, versao: 0 });
     vi.setSystemTime(new Date("2026-11-27T10:01:00Z"));
     expect(await lerSessao(token)).toBeNull();
+  });
+
+  it("guarda a versão da sessão no token", async () => {
+    expect((await lerSessao(await criarSessao(usuario, 3)))?.versao).toBe(3);
   });
 
   it("sem segredo (ou curto demais) não cria sessão", async () => {

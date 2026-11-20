@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { criarBancoDeTeste } from "./banco-teste";
 import { definirConsulta } from "./banco";
-import { criarUsuario, definirAtivo } from "./usuarios";
+import { criarUsuario, definirAtivo, trocarSenha } from "./usuarios";
 import { COOKIE_SESSAO, criarSessao } from "./sessao";
 import { exigirAdmin, exigirUsuario, identificarCliente, verificarAcesso } from "./protecao";
 
@@ -35,6 +35,20 @@ describe("protecao", () => {
     await definirAtivo(1, false);
     const r = await exigirUsuario(req);
     expect(r.ok).toBe(false);
+  });
+
+  it("sessão emitida antes de uma troca de senha deixa de valer", async () => {
+    const req = await requisicaoDe(1, "ana");
+    expect((await exigirUsuario(req)).ok).toBe(true);
+    await trocarSenha(1, "nova-senha-123");
+    expect((await exigirUsuario(req)).ok).toBe(false);
+  });
+
+  it("desativar e reativar não ressuscita sessões antigas", async () => {
+    const req = await requisicaoDe(1, "ana");
+    await definirAtivo(1, false);
+    await definirAtivo(1, true);
+    expect((await exigirUsuario(req)).ok).toBe(false);
   });
 
   it("não confia no admin do cookie: vale o do banco", async () => {

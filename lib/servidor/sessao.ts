@@ -2,6 +2,9 @@ import { jwtVerify, SignJWT } from "jose";
 
 export type UsuarioSessao = { id: number; usuario: string; nome: string; admin: boolean };
 
+/** Sessão lida do cookie; `versao` precisa bater com `usuarios.sessao_versao` para valer. */
+export type SessaoLida = UsuarioSessao & { versao: number };
+
 export const COOKIE_SESSAO = "sessao";
 const DURACAO_SEGUNDOS = 7 * 24 * 3600;
 
@@ -11,21 +14,21 @@ function segredo(): Uint8Array {
   return new TextEncoder().encode(valor);
 }
 
-export async function criarSessao(u: UsuarioSessao): Promise<string> {
-  return new SignJWT({ id: u.id, usuario: u.usuario, nome: u.nome, admin: u.admin })
+export async function criarSessao(u: UsuarioSessao, versao = 0): Promise<string> {
+  return new SignJWT({ id: u.id, usuario: u.usuario, nome: u.nome, admin: u.admin, v: versao })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime(`${DURACAO_SEGUNDOS}s`)
     .sign(segredo());
 }
 
-export async function lerSessao(token: string | undefined): Promise<UsuarioSessao | null> {
+export async function lerSessao(token: string | undefined): Promise<SessaoLida | null> {
   if (!token) return null;
   try {
     const { payload } = await jwtVerify(token, segredo(), { algorithms: ["HS256"] });
-    const { id, usuario, nome, admin } = payload;
+    const { id, usuario, nome, admin, v } = payload;
     if (typeof id !== "number" || typeof usuario !== "string" || typeof nome !== "string") return null;
-    return { id, usuario, nome, admin: admin === true };
+    return { id, usuario, nome, admin: admin === true, versao: typeof v === "number" ? v : 0 };
   } catch {
     return null;
   }

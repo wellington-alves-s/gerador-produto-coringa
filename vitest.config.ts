@@ -8,6 +8,9 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
     globals: true,
+    // Os testes de servidor sobem um Postgres em memória (PGlite) e rodam scrypt; sob carga passam de 5 s.
+    testTimeout: 30_000,
+    hookTimeout: 30_000,
   },
   resolve: {
     alias: {

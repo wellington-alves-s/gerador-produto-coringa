@@ -3,11 +3,11 @@ import { ErroUsuarioExistente, ErroValidacao } from "./erros";
 import { hashSenha } from "./senha";
 import type { UsuarioSessao } from "./sessao";
 
-export type Usuario = UsuarioSessao & { ativo: boolean; criadoEm: string };
+export type Usuario = UsuarioSessao & { ativo: boolean; criadoEm: string; sessaoVersao: number };
 
-type Linha = { id: number; usuario: string; nome: string; admin: boolean; ativo: boolean; criado_em: Date | string; senha_hash?: string };
+type Linha = { id: number; usuario: string; nome: string; admin: boolean; ativo: boolean; criado_em: Date | string; sessao_versao: number; senha_hash?: string };
 
-const COLUNAS = "id, usuario, nome, admin, ativo, criado_em";
+const COLUNAS = "id, usuario, nome, admin, ativo, criado_em, sessao_versao";
 const TAMANHO_MINIMO_SENHA = 8;
 
 function paraUsuario(l: Linha): Usuario {
@@ -18,6 +18,7 @@ function paraUsuario(l: Linha): Usuario {
     admin: l.admin,
     ativo: l.ativo,
     criadoEm: new Date(l.criado_em).toISOString(),
+    sessaoVersao: l.sessao_versao,
   };
 }
 
@@ -65,9 +66,11 @@ export async function listarUsuarios(): Promise<Usuario[]> {
 
 export async function trocarSenha(id: number, senha: string): Promise<void> {
   validarSenha(senha);
-  await consultar("UPDATE usuarios SET senha_hash = $2 WHERE id = $1", [id, await hashSenha(senha)]);
+  // Trocar a senha também derruba as sessões abertas (sobe a versão).
+  await consultar("UPDATE usuarios SET senha_hash = $2, sessao_versao = sessao_versao + 1 WHERE id = $1", [id, await hashSenha(senha)]);
 }
 
 export async function definirAtivo(id: number, ativo: boolean): Promise<void> {
-  await consultar("UPDATE usuarios SET ativo = $2 WHERE id = $1", [id, ativo]);
+  // Desativar sobe a versão: reativar depois não ressuscita os cookies antigos.
+  await consultar("UPDATE usuarios SET ativo = $2, sessao_versao = sessao_versao + CASE WHEN $2::boolean THEN 0 ELSE 1 END WHERE id = $1", [id, ativo]);
 }

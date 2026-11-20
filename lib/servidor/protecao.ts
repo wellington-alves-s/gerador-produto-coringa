@@ -23,7 +23,8 @@ function recusar(status: number, mensagem: string): ResultadoUsuario {
 export async function exigirUsuario(requisicao: Request): Promise<ResultadoUsuario> {
   const sessao = await lerSessao(lerCookie(requisicao, COOKIE_SESSAO));
   const conta = sessao ? await buscarPorId(sessao.id) : null;
-  if (!conta || !conta.ativo) return recusar(401, "Faça login para continuar.");
+  // A versão do cookie precisa ser a atual: trocar a senha ou desativar a conta invalida as sessões antigas.
+  if (!sessao || !conta || !conta.ativo || sessao.versao !== conta.sessaoVersao) return recusar(401, "Faça login para continuar.");
   // Os dados vêm do banco, não do cookie: promover/rebaixar um admin vale na hora.
   return { ok: true, usuario: { id: conta.id, usuario: conta.usuario, nome: conta.nome, admin: conta.admin } };
 }
