@@ -1,0 +1,7 @@
+Gere uma imagem de produto no estilo de catálogo de e-commerce para a esquadria descrita no JSON abaixo, seguindo fielmente o JSON.
+
+Enquadramento: vista frontal perfeitamente plana (elevação ortogonal, como um desenho de fábrica), sem perspectiva, sem ângulo, sem sombra projetada e sem reflexos. Iluminação uniforme e suave. Fundo branco puro e liso, sem degradê, sem chão e sem ambiente. A peça fica centralizada, com margem branca ao redor.
+
+Disposição: respeite exatamente a quantidade e a ordem das folhas indicadas em "descricao_do_produto", da esquerda para a direita. Folha veneziana = quadro de madeira com ripas horizontais inclinadas. Folha panorâmica = quadro de madeira com um único vidro grande e transparente, sem travessas intermediárias (o vidro aparece branco, deixando ver o fundo). Folhas vizinhas ficam encostadas, como numa janela de correr real.
+
+Madeira clara e natural, com veios suaves e acabamento verniz fosco. Ferragem simples e pequena, no acabamento indicado, apenas onde as folhas se encontram. Sem textos, cotas, setas, numeração, marca d'água ou pessoas.

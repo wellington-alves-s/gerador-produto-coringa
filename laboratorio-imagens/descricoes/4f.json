@@ -1,0 +1,42 @@
+{
+  "detalhes_do_objeto": {
+    "categoria": "Esquadria de madeira",
+    "tipo_especifico": "Esquadria semi-panorâmico e veneziana",
+    "formato_geral": "Formato reto. Orientação horizontal (largura ≈ 1,45 vezes a altura)"
+  },
+  "materiais_e_acabamentos": {
+    "material_base": "Madeira maciça",
+    "padrao_de_madeira": "Cedrinho",
+    "textura": "Superfície lisa com veios naturais da madeira visíveis",
+    "material_secundario": "Metal (utilizado nas ferragens)"
+  },
+  "estrutura_e_componentes": {
+    "caixilharia": {
+      "descricao": "Moldura perimetral externa robusta, em madeira",
+      "guarnicao": "Guarnição (moldura de acabamento) aplicada nos dois lados"
+    },
+    "folhas_da_janela": {
+      "estilo_dos_paineis": [
+        "Vidros amplos com poucas divisões de madeira",
+        "Veneziana (painéis preenchidos com ripas horizontais inclinadas)"
+      ],
+      "tipo_de_palheta": "francesa",
+      "divisao_dos_vidros": "Vidros em quantidade e tamanhos proporcionais às medidas da peça"
+    },
+    "sistema_de_movimentacao": {
+      "mecanismo": "correr",
+      "lado_de_abertura": "central"
+    }
+  },
+  "ferragens_visiveis": {
+    "presenca": "Ferragens visíveis (puxadores e fecho)",
+    "acabamento": "Ouro velho (LO), dourado envelhecido"
+  },
+  "observacoes_do_pedido": {
+    "descricao_do_produto": "Janela de correr com 4 folhas: 2 folhas venezianas nas extremidades e 2 folhas panorâmicas de vidro no centro"
+  },
+  "fundo": {
+    "tipo": "Recortado",
+    "cor": "Branco"
+  }
+}

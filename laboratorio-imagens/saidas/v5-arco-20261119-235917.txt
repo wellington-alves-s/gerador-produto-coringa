@@ -1,0 +1,52 @@
+A imagem anexa é uma referência de ESTILO: foto de catálogo em vista frontal plana, fundo branco puro, madeira clara natural, vidro transparente (aparece branco). Gere uma imagem nova nesse mesmo estilo para a esquadria descrita no JSON abaixo, seguindo fielmente o JSON. Quantidade, tipo e ordem das folhas vêm de "descricao_do_produto", da esquerda para a direita, e valem mais do que a disposição da referência quando divergirem.
+
+Enquadramento: elevação frontal perfeitamente plana e ortogonal, sem perspectiva, sem ângulo, sem sombra projetada, sem reflexos. Fundo branco puro e liso, sem chão nem ambiente.
+
+Proporção (obrigatória): a peça inteira tem proporção largura:altura de 1,15:1 (largura = 1,15 vezes a altura). Ela ocupa cerca de 61% da largura do quadro e 80% da altura do quadro, centralizada, com margem branca ao redor. Não estique a peça para preencher o quadro.
+
+Ferragens: apenas no centro da peça, onde as folhas centrais se encontram, no acabamento indicado no JSON. Nenhuma ferragem, puxador ou fecho nas folhas das extremidades laterais.
+
+Sem textos, cotas, setas, numeração, marca d'água ou pessoas.
+
+{
+  "detalhes_do_objeto": {
+    "categoria": "Esquadria de madeira",
+    "tipo_especifico": "Esquadria quadriculado e veneziana",
+    "formato_geral": "Formato arco. Orientação horizontal (largura ≈ 1,15 vezes a altura)"
+  },
+  "materiais_e_acabamentos": {
+    "material_base": "Madeira maciça",
+    "padrao_de_madeira": "Cedrinho",
+    "textura": "Superfície lisa com veios naturais da madeira visíveis",
+    "material_secundario": "Metal (utilizado nas ferragens)"
+  },
+  "estrutura_e_componentes": {
+    "caixilharia": {
+      "descricao": "Moldura perimetral externa robusta, em madeira",
+      "guarnicao": "Guarnição (moldura de acabamento) aplicada nos dois lados"
+    },
+    "folhas_da_janela": {
+      "estilo_dos_paineis": [
+        "Vidros divididos em quadrados por travessas finas de madeira",
+        "Veneziana (painéis preenchidos com ripas horizontais inclinadas)"
+      ],
+      "tipo_de_palheta": "francesa",
+      "divisao_dos_vidros": "Vidros em quantidade e tamanhos proporcionais às medidas da peça"
+    },
+    "sistema_de_movimentacao": {
+      "mecanismo": "correr",
+      "lado_de_abertura": "central"
+    }
+  },
+  "ferragens_visiveis": {
+    "presenca": "Ferragens visíveis (puxadores e fecho)",
+    "acabamento": "Ouro velho (LO), dourado envelhecido"
+  },
+  "observacoes_do_pedido": {
+    "descricao_do_produto": "Janela em arco com bandeira fixa em arco dividida em vidros. Abaixo, 4 folhas: 2 folhas quadriculadas de correr nas extremidades (cada uma com 6 vidros pequenos, 2 colunas por 3 linhas) e 2 folhas venezianas fixas no centro"
+  },
+  "fundo": {
+    "tipo": "Recortado",
+    "cor": "Branco"
+  }
+}
