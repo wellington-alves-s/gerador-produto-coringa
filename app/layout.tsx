@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { MenuUsuario } from "@/components/ui/MenuUsuario";
 import { CHAVE_TEMA } from "@/lib/tema";
 
 const geistSans = Geist({
@@ -50,7 +51,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <img src="/marca/logo-madel.png" alt="Madel" className="h-8 w-auto" />
             <span className="font-semibold text-white">Produto Coringa</span>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-4">
+            <MenuUsuario />
+            <ThemeToggle />
+          </div>
         </header>
         <main>{children}</main>
       </body>

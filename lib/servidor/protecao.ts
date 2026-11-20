@@ -1,23 +1,41 @@
+import { NextResponse } from "next/server";
+import { lerCookie } from "./cookies";
+import { COOKIE_SESSAO, lerSessao, type UsuarioSessao } from "./sessao";
+import { buscarPorId } from "./usuarios";
+
 /**
- * Ponto único de proteção da rota de geração de imagem.
- *
- * Hoje o acesso é livre (decisão da v1). Para bloquear no futuro, basta
- * implementar a regra aqui — a rota já chama `verificarAcesso` antes de
- * qualquer chamada paga:
- *
- *  - Limite por IP: usar `identificarCliente(requisicao)` como chave de um
- *    contador (ex.: Upstash/Vercel KV) e devolver `{ permitido: false, status: 429 }`.
- *  - Senha compartilhada: ler o cabeçalho `x-acesso-senha` (ou um cookie) e
- *    comparar com `process.env.GERAR_IMAGEM_SENHA`, devolvendo status 401.
+ * Ponto único de proteção das rotas de API: sessão válida (cookie assinado) E conta ativa no banco.
+ * O banco é conferido a cada chamada para que desativar uma conta valha na hora.
  */
 export type ResultadoAcesso = { permitido: true } | { permitido: false; status: number; mensagem: string };
+
+export type ResultadoUsuario = { ok: true; usuario: UsuarioSessao } | { ok: false; resposta: Response };
 
 export function identificarCliente(requisicao: Request): string {
   const encaminhado = requisicao.headers.get("x-forwarded-for");
   return encaminhado?.split(",")[0]?.trim() || requisicao.headers.get("x-real-ip") || "desconhecido";
 }
 
+function recusar(status: number, mensagem: string): ResultadoUsuario {
+  return { ok: false, resposta: NextResponse.json({ erro: mensagem }, { status }) };
+}
+
+export async function exigirUsuario(requisicao: Request): Promise<ResultadoUsuario> {
+  const sessao = await lerSessao(lerCookie(requisicao, COOKIE_SESSAO));
+  const conta = sessao ? await buscarPorId(sessao.id) : null;
+  if (!conta || !conta.ativo) return recusar(401, "Faça login para continuar.");
+  // Os dados vêm do banco, não do cookie: promover/rebaixar um admin vale na hora.
+  return { ok: true, usuario: { id: conta.id, usuario: conta.usuario, nome: conta.nome, admin: conta.admin } };
+}
+
+export async function exigirAdmin(requisicao: Request): Promise<ResultadoUsuario> {
+  const r = await exigirUsuario(requisicao);
+  if (!r.ok) return r;
+  return r.usuario.admin ? r : recusar(403, "Acesso restrito ao administrador.");
+}
+
 export async function verificarAcesso(requisicao: Request): Promise<ResultadoAcesso> {
-  void requisicao;
-  return { permitido: true };
+  const r = await exigirUsuario(requisicao);
+  if (r.ok) return { permitido: true };
+  return { permitido: false, status: r.resposta.status, mensagem: "Faça login para continuar." };
 }
