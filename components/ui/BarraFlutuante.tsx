@@ -23,6 +23,7 @@ type Props = {
 
 const MARGEM = 8;
 const MARGEM_ANCORA = 16;
+const FOLGA_ACIMA_ANCORA = 24;
 const VISIVEL_MINIMO = 56;
 const PASSO_TECLADO = 12;
 
@@ -41,12 +42,13 @@ export function BarraFlutuante({ rotulo, ancora, expandido, principal, acoes, ex
   const [posicao, setPosicao] = useState<Posicao | null>(null);
   const arrasto = useRef<{ x: number; y: number; origem: Posicao } | null>(null);
 
-  // Posição inicial: canto superior direito da âncora (o croqui), um pouco acima do desenho.
+  // Posição inicial: canto superior direito da âncora (o croqui), logo acima dele para não cobrir o desenho.
   useEffect(() => {
     const largura = barraRef.current?.offsetWidth ?? 0;
+    const altura = barraRef.current?.offsetHeight ?? 0;
     const caixa = ancora?.current?.getBoundingClientRect();
     const inicial = caixa && caixa.width > 0
-      ? { x: caixa.right - largura - MARGEM_ANCORA, y: caixa.top + MARGEM }
+      ? { x: caixa.right - largura - MARGEM_ANCORA, y: caixa.top - altura - FOLGA_ACIMA_ANCORA }
       : { x: window.innerWidth - largura - MARGEM_ANCORA, y: MARGEM_ANCORA };
     // Medir o DOM (largura da barra e posição do croqui) só é possível depois da montagem.
     setPosicao(limitar(inicial, largura));

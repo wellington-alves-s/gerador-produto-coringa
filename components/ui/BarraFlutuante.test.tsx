@@ -53,14 +53,15 @@ describe("BarraFlutuante", () => {
     expect(posicao().x).toBeGreaterThan(1000);
   });
 
-  it("com âncora, nasce no canto superior direito dela, logo no topo", () => {
+  it("com âncora, nasce no canto superior direito dela, logo acima (sem cobri-la)", () => {
     const ancora = createRef<HTMLDivElement>();
     render(<div ref={ancora} data-testid="croqui" />);
     vi.spyOn(ancora.current!, "getBoundingClientRect").mockReturnValue({
       left: 100, right: 1100, top: 300, bottom: 1300, width: 1000, height: 1000, x: 100, y: 300, toJSON: () => ({}),
     });
     renderizar({ ancora });
-    expect(posicao()).toEqual({ x: 1100 - 16, y: 308 });
+    // jsdom não mede a barra (altura 0): y = topo da âncora - folga de 24px
+    expect(posicao()).toEqual({ x: 1100 - 16, y: 276 });
   });
 
   it("arrastar pela alça move a barra", () => {
