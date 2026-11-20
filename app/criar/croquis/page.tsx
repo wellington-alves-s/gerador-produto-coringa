@@ -70,7 +70,7 @@ export default function PaginaMeusCroquis() {
       .catch(() => {});
   }, [admin]);
 
-  // Só navega depois que o estado carregado foi aplicado (mesmo padrão do DraftRecoveryPrompt).
+  // Só navega depois que o estado carregado foi aplicado.
   useEffect(() => {
     if (!destino.current) return;
     router.push(destino.current);

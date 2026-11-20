@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useReducer, useRef, useState, type Dispatch, type ReactNode } from "react";
 import { ESTADO_INICIAL, type EstadoPedido, type EtapaId } from "./pedido";
-import { existeRascunho, salvarRascunho } from "./wizard-storage";
+import { limparRascunho } from "./wizard-storage";
 import { PRODUTOS } from "@/produtos";
 import type { Campo, TipoProdutoId } from "@/produtos/tipos";
 import { campoEfetivo, campoVisivel, dependenciaAtiva } from "@/produtos/validacao";
@@ -128,7 +128,6 @@ const WizardContext = createContext<WizardContextValor | null>(null);
 
 export function WizardProvider({ children }: { children: ReactNode }) {
   const [estado, dispatchBase] = useReducer(reducerPedido, ESTADO_INICIAL);
-  const podeSalvar = useRef(!existeRascunho());
   const [salvamento, setSalvamento] = useState<{ status: StatusSalvamento; mensagem: string | null }>({
     status: "ocioso",
     mensagem: null,
@@ -141,11 +140,10 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   // Id devolvido pelo último salvamento: cobre o intervalo até o estado do reducer refleti-lo.
   const ultimoId = useRef<{ geracao: number; id: number } | null>(null);
 
+  // Apaga restos do antigo rascunho local (ver wizard-storage.ts).
   useEffect(() => {
-    if (!podeSalvar.current) return;
-    const id = setTimeout(() => salvarRascunho(estado), 300);
-    return () => clearTimeout(id);
-  }, [estado]);
+    limparRascunho();
+  }, []);
 
   useEffect(() => {
     const ultimo = ultimoId.current;
@@ -157,7 +155,6 @@ export function WizardProvider({ children }: { children: ReactNode }) {
 
   const dispatch = useCallback<Dispatch<AcaoPedido>>((acao) => {
     if (acao.type === "CARREGAR_ESTADO" || acao.type === "REINICIAR") {
-      podeSalvar.current = true;
       geracao.current += 1;
     }
     dispatchBase(acao);

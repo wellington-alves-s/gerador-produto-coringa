@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, act, waitFor } from "@testing-library/react";
+import { render, act } from "@testing-library/react";
 import { useEffect } from "react";
 import { reducerPedido, WizardProvider, useWizard } from "./wizard-context";
 import { ESTADO_INICIAL } from "./pedido";
 import { criarTexto, transformacaoPadraoDaImagem, type DesenhoEstado } from "./desenho";
-import { salvarRascunho, carregarRascunho } from "./wizard-storage";
+import { CHAVE_RASCUNHO } from "./wizard-storage";
 
 describe("reducerPedido", () => {
   it("DEFINIR_TIPO troca o tipo e limpa especificações antigas", () => {
@@ -129,63 +129,27 @@ describe("reducerPedido — desenho editável", () => {
   });
 });
 
-describe("WizardProvider — autosave", () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-  });
-
-  function PaginaQueDisparaNoMount() {
-    const { dispatch } = useWizard();
-    useEffect(() => {
-      dispatch({ type: "IR_PARA_ETAPA", etapa: "tipo" });
-    }, [dispatch]);
-    return null;
-  }
-
-  it("não perde um rascunho real mesmo quando a própria página dispara uma ação no mount, antes da recuperação ser resolvida", async () => {
+describe("WizardProvider — rascunho local aposentado", () => {
+  it("apaga um rascunho antigo do navegador ao montar e não grava novos (o croqui fica salvo na nuvem)", async () => {
     vi.useFakeTimers();
-    salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria", ultimaEtapa: "especificacoes" });
+    window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify({ pedido: { cliente: "Maria" }, tipo: "esquadria" }));
 
-    render(
-      <WizardProvider>
-        <PaginaQueDisparaNoMount />
-      </WizardProvider>
-    );
-
-    // Uma página real dispara IR_PARA_ETAPA no próprio mount, gerando uma
-    // segunda renderização antes que o usuário decida "Continuar" ou
-    // "Começar nova" no diálogo de recuperação. O autosave não pode
-    // sobrescrever o rascunho real nesse meio-tempo.
-    await vi.advanceTimersByTimeAsync(400);
-
-    expect(carregarRascunho()?.ultimaEtapa).toBe("especificacoes");
-
-    vi.useRealTimers();
-  });
-
-  it("volta a salvar normalmente depois que o usuário resolve a recuperação (Continuar)", async () => {
-    vi.useFakeTimers();
-    salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria", ultimaEtapa: "especificacoes" });
-
-    function ComRecuperacao() {
+    function Edita() {
       const { dispatch } = useWizard();
       useEffect(() => {
-        dispatch({ type: "IR_PARA_ETAPA", etapa: "tipo" });
-        dispatch({ type: "CARREGAR_ESTADO", estado: { ...ESTADO_INICIAL, tipo: "outros" } });
+        dispatch({ type: "DEFINIR_TIPO", tipo: "outros" });
+        dispatch({ type: "ATUALIZAR_PEDIDO", campo: "cliente", valor: "João" });
       }, [dispatch]);
       return null;
     }
-
     render(
       <WizardProvider>
-        <ComRecuperacao />
+        <Edita />
       </WizardProvider>
     );
+    await vi.advanceTimersByTimeAsync(500);
 
-    await vi.advanceTimersByTimeAsync(400);
-
-    expect(carregarRascunho()?.tipo).toBe("outros");
-
+    expect(window.localStorage.getItem(CHAVE_RASCUNHO)).toBeNull();
     vi.useRealTimers();
   });
 });
@@ -300,15 +264,6 @@ describe("WizardProvider — salvarAgora", () => {
     expect(ctx.statusSalvamento).toBe("erro");
     expect(ctx.mensagemSalvamento).toMatch(/imagens/);
     expect(ctx.estado.croquiId).toBeNull();
-  });
-
-  it("o rascunho local continua sendo gravado mesmo com o salvamento falhando", async () => {
-    fetchMock.mockRejectedValue(new Error("offline"));
-    await preparar();
-    await act(async () => {
-      await ctx.salvarAgora();
-    });
-    await waitFor(() => expect(carregarRascunho()?.pedido.cliente).toBe("Maria"));
   });
 });
 
