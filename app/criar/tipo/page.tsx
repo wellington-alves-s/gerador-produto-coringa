@@ -12,6 +12,15 @@ export default function EtapaTipo() {
   const router = useRouter();
   const produtos = listarProdutos();
 
+  // A logo/casinha do cabeçalho chegam aqui com ?novo=1: começa um croqui novo (sem herdar o
+  // cliente nem o id do anterior, que seria sobrescrito ao salvar). O "← Voltar" não usa ?novo.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).has("novo")) {
+      dispatch({ type: "REINICIAR" });
+      router.replace("/criar/tipo");
+    }
+  }, [dispatch, router]);
+
   useEffect(() => {
     dispatch({ type: "IR_PARA_ETAPA", etapa: "tipo" });
   }, [dispatch]);

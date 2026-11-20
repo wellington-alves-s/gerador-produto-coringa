@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useReducer, useRef, useState, type Dispatch, type ReactNode } from "react";
 import { ESTADO_INICIAL, type EstadoPedido, type EtapaId } from "./pedido";
-import { limparRascunho } from "./wizard-storage";
+import { carregarRascunho, limparRascunho, limparRascunhoAntigo, salvarRascunho } from "./wizard-storage";
 import { PRODUTOS } from "@/produtos";
 import type { Campo, TipoProdutoId } from "@/produtos/tipos";
 import { campoEfetivo, campoVisivel, dependenciaAtiva } from "@/produtos/validacao";
@@ -140,10 +140,23 @@ export function WizardProvider({ children }: { children: ReactNode }) {
   // Id devolvido pelo último salvamento: cobre o intervalo até o estado do reducer refleti-lo.
   const ultimoId = useRef<{ geracao: number; id: number } | null>(null);
 
-  // Apaga restos do antigo rascunho local (ver wizard-storage.ts).
+  // Restaura em silêncio o rascunho da sessão (recarregar a página não perde o que foi editado) e só
+  // então libera as páginas: elas redirecionam para /criar/tipo quando não vêem um tipo escolhido.
+  const [pronto, setPronto] = useState(false);
   useEffect(() => {
-    limparRascunho();
+    limparRascunhoAntigo();
+    const rascunho = carregarRascunho();
+    if (rascunho) dispatchBase({ type: "CARREGAR_ESTADO", estado: rascunho });
+    // O sessionStorage só existe no navegador; este setState acontece uma vez, na montagem.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPronto(true);
   }, []);
+
+  useEffect(() => {
+    if (!pronto) return;
+    const id = setTimeout(() => (estado.tipo ? salvarRascunho(estado) : limparRascunho()), 300);
+    return () => clearTimeout(id);
+  }, [estado, pronto]);
 
   useEffect(() => {
     const ultimo = ultimoId.current;
@@ -188,7 +201,7 @@ export function WizardProvider({ children }: { children: ReactNode }) {
     <WizardContext.Provider
       value={{ estado, dispatch, salvarAgora, statusSalvamento: salvamento.status, mensagemSalvamento: salvamento.mensagem }}
     >
-      {children}
+      {pronto ? children : null}
     </WizardContext.Provider>
   );
 }

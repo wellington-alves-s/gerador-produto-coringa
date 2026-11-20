@@ -20,7 +20,7 @@ function usuarioLogado(admin: boolean) {
 beforeEach(() => {
   push.mockClear();
   caminho = "/criar/tipo";
-  window.localStorage.clear();
+  window.sessionStorage.clear();
   fetchMock.mockReset();
   vi.stubGlobal("fetch", fetchMock);
 });
@@ -42,11 +42,11 @@ describe("MenuUsuario", () => {
 
   it("Sair chama o logout, apaga o rascunho local e vai para /login", async () => {
     usuarioLogado(false);
-    window.localStorage.setItem(CHAVE_RASCUNHO, "{}");
+    window.sessionStorage.setItem(CHAVE_RASCUNHO, "{}");
     render(<MenuUsuario />);
     await userEvent.click(await screen.findByRole("button", { name: "Sair" }));
     expect(fetchMock).toHaveBeenCalledWith("/api/logout", expect.objectContaining({ method: "POST" }));
-    expect(window.localStorage.getItem(CHAVE_RASCUNHO)).toBeNull();
+    expect(window.sessionStorage.getItem(CHAVE_RASCUNHO)).toBeNull();
     expect(push).toHaveBeenCalledWith("/login");
   });
 

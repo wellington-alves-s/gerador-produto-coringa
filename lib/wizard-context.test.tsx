@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { reducerPedido, WizardProvider, useWizard } from "./wizard-context";
 import { ESTADO_INICIAL } from "./pedido";
 import { criarTexto, transformacaoPadraoDaImagem, type DesenhoEstado } from "./desenho";
-import { CHAVE_RASCUNHO } from "./wizard-storage";
+import { CHAVE_RASCUNHO, carregarRascunho, salvarRascunho } from "./wizard-storage";
 
 describe("reducerPedido", () => {
   it("DEFINIR_TIPO troca o tipo e limpa especificações antigas", () => {
@@ -129,28 +129,109 @@ describe("reducerPedido — desenho editável", () => {
   });
 });
 
-describe("WizardProvider — rascunho local aposentado", () => {
-  it("apaga um rascunho antigo do navegador ao montar e não grava novos (o croqui fica salvo na nuvem)", async () => {
-    vi.useFakeTimers();
-    window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify({ pedido: { cliente: "Maria" }, tipo: "esquadria" }));
+describe("WizardProvider — rascunho temporário da sessão", () => {
+  type Contexto = ReturnType<typeof useWizard>;
+  let ctx: Contexto;
+  function Sonda() {
+    ctx = useWizard();
+    return <span data-testid="filho" />;
+  }
+  const montar = () =>
+    render(
+      <WizardProvider>
+        <Sonda />
+      </WizardProvider>
+    );
 
-    function Edita() {
+  beforeEach(() => {
+    window.sessionStorage.clear();
+    window.localStorage.clear();
+  });
+
+  it("restaura em silêncio o rascunho da sessão ao montar (sem pedir confirmação)", async () => {
+    salvarRascunho({
+      ...ESTADO_INICIAL,
+      tipo: "esquadria",
+      pedido: { ...ESTADO_INICIAL.pedido, cliente: "Maria" },
+      croquiId: 7,
+    });
+    montar();
+    expect(ctx.estado.tipo).toBe("esquadria");
+    expect(ctx.estado.pedido.cliente).toBe("Maria");
+    expect(ctx.estado.croquiId).toBe(7);
+  });
+
+  it("só mostra as páginas depois de restaurar (elas não redirecionam por achar que não há tipo)", () => {
+    salvarRascunho({ ...ESTADO_INICIAL, tipo: "outros" });
+    let tipoNaPrimeiraRenderizacaoDoFilho: unknown = "nunca renderizou";
+    function Filho() {
+      const { estado } = useWizard();
+      if (tipoNaPrimeiraRenderizacaoDoFilho === "nunca renderizou") tipoNaPrimeiraRenderizacaoDoFilho = estado.tipo;
+      return null;
+    }
+    render(
+      <WizardProvider>
+        <Filho />
+      </WizardProvider>
+    );
+    expect(tipoNaPrimeiraRenderizacaoDoFilho).toBe("outros");
+  });
+
+  it("grava o rascunho na sessão a cada mudança, depois de 300 ms", async () => {
+    vi.useFakeTimers();
+    montar();
+    await act(async () => {
+      ctx.dispatch({ type: "DEFINIR_TIPO", tipo: "esquadria" });
+      ctx.dispatch({ type: "ATUALIZAR_PEDIDO", campo: "cliente", valor: "João" });
+    });
+    expect(carregarRascunho()).toBeNull();
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(350);
+    });
+    expect(carregarRascunho()?.pedido.cliente).toBe("João");
+    vi.useRealTimers();
+  });
+
+  it("não apaga o rascunho antes de restaurá-lo, mesmo que uma página dispare uma ação ao montar", async () => {
+    vi.useFakeTimers();
+    salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria", ultimaEtapa: "especificacoes" });
+    function Pagina() {
       const { dispatch } = useWizard();
       useEffect(() => {
-        dispatch({ type: "DEFINIR_TIPO", tipo: "outros" });
-        dispatch({ type: "ATUALIZAR_PEDIDO", campo: "cliente", valor: "João" });
+        dispatch({ type: "IR_PARA_ETAPA", etapa: "tipo" });
       }, [dispatch]);
       return null;
     }
     render(
       <WizardProvider>
-        <Edita />
+        <Pagina />
       </WizardProvider>
     );
-    await vi.advanceTimersByTimeAsync(500);
-
-    expect(window.localStorage.getItem(CHAVE_RASCUNHO)).toBeNull();
+    await vi.advanceTimersByTimeAsync(400);
+    expect(carregarRascunho()?.tipo).toBe("esquadria");
     vi.useRealTimers();
+  });
+
+  it("REINICIAR descarta o rascunho (começar um croqui novo não traz o anterior de volta)", async () => {
+    vi.useFakeTimers();
+    salvarRascunho({ ...ESTADO_INICIAL, tipo: "esquadria", pedido: { ...ESTADO_INICIAL.pedido, cliente: "Maria" } });
+    montar();
+    await act(async () => {
+      ctx.dispatch({ type: "REINICIAR" });
+    });
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(400);
+    });
+    expect(ctx.estado.tipo).toBeNull();
+    expect(carregarRascunho()).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it("apaga o rascunho que a versão antiga deixou no localStorage", () => {
+    window.localStorage.setItem(CHAVE_RASCUNHO, JSON.stringify({ pedido: { cliente: "Maria" }, tipo: "esquadria" }));
+    montar();
+    expect(window.localStorage.getItem(CHAVE_RASCUNHO)).toBeNull();
+    expect(ctx.estado.tipo).toBeNull();
   });
 });
 
